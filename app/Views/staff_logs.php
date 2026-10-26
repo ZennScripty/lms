@@ -1,0 +1,7 @@
+<?php
+use App\Core\{Auth, Authorization, Database as DB};
+$uid=(int)Auth::user()['id'];$admin=Authorization::isSuperAdmin();$where=$admin?'1=1':'user_id=?';$params=$admin?[]:[$uid];
+$total=(int)DB::val("SELECT COUNT(*) FROM audit_logs WHERE $where",$params);$pages=max(1,(int)ceil($total/25));$page=max(1,min($pages,(int)($_GET['page']??1)));$offset=($page-1)*25;
+$logs=DB::all("SELECT a.*,u.full_name FROM audit_logs a LEFT JOIN users u ON u.id=a.user_id WHERE ".($admin?'1=1':'a.user_id=?')." ORDER BY a.id DESC LIMIT 25 OFFSET $offset",$params);
+page_header('System logs'); ?>
+<section class="card"><h2><?= e(tr('System activity')) ?></h2><div class="table-wrap"><table><thead><tr><?php foreach(['User','Action','Type','Date'] as $h): ?><th><?= e(tr($h)) ?></th><?php endforeach; ?></tr></thead><tbody><?php foreach($logs as $l): ?><tr><td><?= e($l['full_name']??'—') ?></td><td><?= e($l['action']) ?></td><td><?= e($l['entity_type']??'—') ?> #<?= (int)$l['entity_id'] ?></td><td><?= e(fmt_dt($l['created_at'])) ?></td></tr><?php endforeach; ?></tbody></table></div></section><div class="pagination"><span><?= $total ?> <?= e(tr('records')) ?> · <?= $page ?> / <?= $pages ?></span><nav><?php if($page>1): ?><a class="btn" href="?page=<?= $page-1 ?>"><?= e(tr('Previous')) ?></a><?php endif; ?><?php if($page<$pages): ?><a class="btn" href="?page=<?= $page+1 ?>"><?= e(tr('Next')) ?></a><?php endif; ?></nav></div><?php page_footer();

@@ -1,0 +1,8 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__.'/../app/bootstrap.php';
+use App\Core\{Auth,Csrf,Database as DB,Validator as V};
+$u=Auth::requireLogin();
+if(is_post()){Csrf::verifyRequest();$id=V::int($_POST['id']??'','Notification',1);DB::run('UPDATE notifications SET is_read=1 WHERE id=? AND user_id=?',[$id,$u['id']]);flash('success','Notification updated.');redirect_self();}
+$total=(int)DB::val('SELECT COUNT(*) FROM notifications WHERE user_id=?',[$u['id']]);$pages=max(1,(int)ceil($total/20));$page=max(1,min($pages,(int)($_GET['page']??1)));$offset=($page-1)*20;$rows=DB::all("SELECT * FROM notifications WHERE user_id=? ORDER BY id DESC LIMIT 20 OFFSET $offset",[$u['id']]);
+page_header('Notifications');foreach($rows as $r): ?><article class="card"><div class="card-heading"><h2><?= e(tr($r['title'])) ?></h2><span class="pill <?= $r['is_read']?'':'ok' ?>"><?= e(tr($r['is_read']?'Read':'Pending')) ?></span></div><p><?= nl2br(e(tr($r['body']??''))) ?></p><small class="muted"><?= e(fmt_dt($r['created_at'])) ?></small><?php if(!$r['is_read']): ?><form method="post" class="inline"><?= csrf_field() ?><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="btn btn-sm"><?= e(tr('Mark as read')) ?></button></form><?php endif; ?></article><?php endforeach;if(!$rows): ?><div class="card empty-state"><?= icon('bell') ?><p><?= e(tr('No notifications yet.')) ?></p></div><?php endif; ?><div class="pagination"><span><?= $total ?> <?= e(tr('records')) ?></span><nav><?php if($page>1): ?><a class="btn" href="?page=<?= $page-1 ?>"><?= e(tr('Previous')) ?></a><?php endif; ?><?php if($page<$pages): ?><a class="btn" href="?page=<?= $page+1 ?>"><?= e(tr('Next')) ?></a><?php endif; ?></nav></div><?php page_footer();

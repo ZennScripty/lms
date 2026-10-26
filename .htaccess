@@ -1,0 +1,4 @@
+<FilesMatch "^(\.env.*|.*\.sql|.*\.log)$">
+    Require all denied
+</FilesMatch>
+RedirectMatch 403 /lms/\.(git|codex|agents|aws)(/|$)

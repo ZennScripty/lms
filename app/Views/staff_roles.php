@@ -1,0 +1,10 @@
+<?php
+use App\Core\{Auth, Authorization, Csrf, Database as DB, Validator as V, Logger};
+if(!Authorization::isSuperAdmin()){forbidden();}
+$error=null;
+if(is_post()){
+    Csrf::verifyRequest();try{$role=DB::one('SELECT * FROM roles WHERE id=?',[V::int($_POST['role_id']??'','Role',1)]);if(!$role||$role['code']==='admin'){throw new DomainException('Admin always has full access.');}$valid=array_map('intval',array_column(DB::all('SELECT id FROM permissions'),'id'));$ids=V::intList($_POST['permission_ids']??[]);if(array_diff($ids,$valid)){throw new DomainException('Invalid assignment.');}DB::transaction(function()use($role,$ids){DB::run('DELETE FROM role_permissions WHERE role_id=?',[$role['id']]);foreach($ids as $id){DB::run('INSERT INTO role_permissions (role_id,permission_id) VALUES (?,?)',[$role['id'],$id]);}});Logger::audit((int)Auth::user()['id'],'permissions_saved','roles',(int)$role['id']);flash('success','Permissions saved.');redirect_self();}catch(Throwable $e){$error=handle_exception($e);}
+}
+$roles=DB::all('SELECT * FROM roles ORDER BY id');$permissions=DB::all('SELECT * FROM permissions ORDER BY code');$grants=[];foreach(DB::all('SELECT role_id,permission_id FROM role_permissions') as $r){$grants[$r['role_id']][]=(int)$r['permission_id'];}
+page_header('Roles & permissions');if($error){echo '<div class="flash flash-error">'.e(tr($error)).'</div>';}
+foreach($roles as $role): ?><section class="card"><h2><?= e(tr($role['name'])) ?></h2><?php if($role['code']==='admin'): ?><p class="muted"><?= e(tr('Admin always has full access.')) ?></p><?php else: ?><form method="post"><?= csrf_field() ?><input type="hidden" name="role_id" value="<?= (int)$role['id'] ?>"><div class="assignment-grid"><?php foreach($permissions as $permission): ?><label class="check"><input type="checkbox" name="permission_ids[]" value="<?= (int)$permission['id'] ?>"<?= checked(in_array((int)$permission['id'],$grants[$role['id']]??[],true)) ?>><?= e($permission['code']) ?></label><?php endforeach; ?></div><button class="btn btn-primary"><?= e(tr('Save permissions')) ?></button></form><?php endif; ?></section><?php endforeach;page_footer();

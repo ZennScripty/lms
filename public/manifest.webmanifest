@@ -1,0 +1,10 @@
+{
+  "name": "TLMTI Learning",
+  "short_name": "TLMTI",
+  "start_url": "dashboard.php",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F6F8FA",
+  "theme_color": "#17657A",
+  "icons": [{ "src": "assets/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
