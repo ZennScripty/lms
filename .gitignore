@@ -2,3 +2,4 @@
 storage/logs/*.log
 storage/uploads/*
 storage/qa/*
+storage/attendance/

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/../app/bootstrap.php';
+\App\Core\Auth::requireLogin();
+if(!\App\Core\Authorization::isSuperAdmin()){forbidden();}
 require_once APP_ROOT . '/app/Support/staff_dispatch.php';
 
 use App\Core\{Auth, Authorization, Csrf, Database, Logger, Validator};

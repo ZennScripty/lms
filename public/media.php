@@ -9,7 +9,15 @@ if(!$allowed){$query="SELECT COUNT(*) FROM content_item_translations t JOIN cont
     else{$query.=" AND c.status='published' AND m.status='published' AND c.subject_id IN (SELECT subject_id FROM student_subjects WHERE student_id=? AND status='active' AND current_week_no>=m.week_no)";$p[]=$u['id'];}
     $allowed=(int)DB::val($query,$p)>0;
 }
+if(Authorization::isStudent()){
+    $allowed=false;
+    foreach(DB::all('SELECT content_item_id FROM content_item_translations WHERE media_asset_id=?',[$id]) as $linked){
+        $lesson=\App\Services\StudentService::lesson((int)$u['id'],(int)$linked['content_item_id']);
+        if($lesson&&$lesson['unlocked']){$allowed=true;break;}
+    }
+}
 if(!$allowed){forbidden();}
+header('X-TLMTI-User: '.(int)$u['id']);
 $root=realpath(APP_ROOT.'/storage/uploads');$path=realpath(APP_ROOT.'/storage/'.$asset['storage_path']);if(!$root||!$path||!str_starts_with($path,$root.DIRECTORY_SEPARATOR)||!is_file($path)){not_found();}
 $size=filesize($path);$start=0;$end=$size-1;
 header('Content-Type: '.$asset['mime_type']);header('X-Content-Type-Options: nosniff');header('Cache-Control: private,no-store');header('Accept-Ranges: bytes');header('Content-Disposition: inline; filename="'.preg_replace('/[^a-zA-Z0-9._-]/','_',$asset['original_name']).'"');

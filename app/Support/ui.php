@@ -6,7 +6,7 @@ function tr(string $text): string
 {
     static $dictionary;
     $dictionary ??= require APP_ROOT . '/app/Config/ui_hi.php';
-    if (\App\Services\TranslationService::currentCode() !== 'hi') { return $text; }
+    if (\App\Services\TranslationService::currentCode() !== 'hi') { $labels=['in_progress'=>'In progress','not_started'=>'Not started','active'=>'Active','inactive'=>'Inactive','blocked'=>'Blocked','draft'=>'Draft','published'=>'Published','archived'=>'Archived','pass'=>'Passed','fail'=>'Not passed','pending'=>'Pending','student'=>'Student','teacher'=>'Teacher','admin'=>'Admin','module'=>'Module','weekly'=>'Weekly','practice'=>'Practice','text'=>'Text','video'=>'Video','audio'=>'Audio','image'=>'Image','restudy'=>'Study again','present'=>'Present','absent'=>'Absent','late'=>'Late','leave'=>'Leave','half_day'=>'Half day','holiday'=>'Holiday'];return $labels[$text]??$text; }
     if (isset($dictionary[$text])) { return $dictionary[$text]; }
     if (preg_match('/^(.+) must be between (\d+) and (\d+) characters\.$/',$text,$m)) { return ($dictionary[$m[1]] ?? $m[1]) . ' ' . $m[2] . ' से ' . $m[3] . ' अक्षरों के बीच होना चाहिए।'; }
     if (preg_match('/^(.+) (must be a whole number|is out of range|has an invalid value|is not a valid email address)\.$/',$text,$m)) { return ($dictionary[$m[1]] ?? $m[1]) . ': मान्य जानकारी दर्ज करें।'; }
@@ -56,7 +56,7 @@ function app_navigation(): array
         ];
     }
     if (\App\Core\Authorization::isStudent()) {
-        return [['dashboard.php','Dashboard','home'],['dashboard.php#courses','My Courses','book'],['tests.php','Tests','test'],['offline_downloads.php','Downloads','download'],['student_detail.php','My Progress','chart'],['notifications.php','Notifications','bell'],['profile.php','Profile','user']];
+        return [['dashboard.php','Dashboard','home'],['courses.php','My Courses','book'],['tests.php','Tests','test'],['offline_downloads.php','Downloads','download'],['progress.php','My Progress','chart'],['attendance.php','My Attendance','check'],['notifications.php','Notifications','bell'],['profile.php','Profile','user']];
     }
     $nav = [['dashboard.php','Dashboard','home'],['subjects.php','My Subjects','book'],['modules.php','Content','book'],['students.php','Students','users'],['tests.php','Tests','test'],['attendance.php','Attendance','check'],['reports.php','Reports','chart'],['profile.php','Profile','user']];
     $permissions = ['subjects.php'=>'subjects.view','modules.php'=>'modules.view','students.php'=>'students.view','tests.php'=>'tests.manage','attendance.php'=>'attendance.view','reports.php'=>'reports.view'];
@@ -67,10 +67,11 @@ function page_header(string $title, array $opts = []): void
 {
     $u = \App\Core\Auth::user();
     $public = !empty($opts['public']) || !$u;
+    $compact=!$public&&(in_array(current_page(),['dashboard.php','attendance.php'],true)||\App\Core\Authorization::isStudent()||\App\Core\Authorization::isTeacher());
     $lang = \App\Services\TranslationService::currentCode();
     header('Cache-Control: private, no-store');
-    echo '<!doctype html><html lang="' . e($lang) . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17657A"><meta name="color-scheme" content="light"><title>' . e(tr($title)) . ' · TLMTI Skills LMS</title><link rel="icon" href="assets/icons/icon.svg"><link rel="stylesheet" href="assets/css/app.css?v=20261026-4"></head>';
-    echo '<body class="' . ($public ? 'auth-page' : 'app-page') . '" data-user-id="' . e($u ? (string)$u['id'] : '') . '" data-csrf="' . e(csrf_token()) . '"><div id="net-banner" class="net-banner" hidden>' . e(tr('You are offline. Connect to sync your progress.')) . '</div>';
+    echo '<!doctype html><html lang="' . e($lang) . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17657A"><meta name="color-scheme" content="light"><title>' . e(tr($title)) . ' · TLMTI Skills LMS</title><link rel="icon" href="assets/icons/icon.svg"><link rel="stylesheet" href="assets/css/app.css?v=20261027-2"></head>';
+    echo '<body class="' . ($public ? 'auth-page' : 'app-page') . '" data-user-id="' . e($u ? (string)$u['id'] : '') . '" data-role="' . e($u ? $u['role_slug'] : '') . '" data-csrf="' . e(csrf_token()) . '"><div id="net-banner" class="net-banner" hidden>' . e(tr('You are offline. Connect to sync your progress.')) . '</div>';
     if (!$public) {
         $nav = app_navigation();
         echo '<aside class="sidebar" id="main-navigation"><button class="icon-btn sidebar-close" data-menu-close aria-label="'.e(tr('Close menu')).'">×</button><a class="brand" href="dashboard.php"><span class="brand-mark">' . icon('book') . '</span><span>TLMTI <small>Skills LMS</small></span></a><div class="workspace-label">' . e(tr(\App\Core\Authorization::isSuperAdmin() ? 'ADMIN WORKSPACE' : (\App\Core\Authorization::isStudent() ? 'MY LEARNING' : 'TEACHING WORKSPACE'))) . '</div><nav aria-label="' . e(tr('Main navigation')) . '">';
@@ -85,13 +86,18 @@ function page_header(string $title, array $opts = []): void
     if (!$public) {
         echo '<a class="icon-btn" href="notifications.php" aria-label="' . e(tr('Notifications')) . '">' . icon('bell') . '</a><span class="topbar-divider"></span><a href="profile.php" class="profile-link"><span class="avatar">' . e(mb_substr($u['name'],0,1)) . '</span><span><strong>' . e($u['name']) . '</strong><small>' . e(tr($u['role_name'])) . '</small></span></a><form method="post" class="inline" data-logout>' . csrf_field() . '<input type="hidden" name="action" value="logout"><button class="icon-btn" aria-label="' . e(tr('Logout')) . '" title="' . e(tr('Logout')) . '">' . icon('logout') . '</button></form>';
     }
-    echo '</div></header><main class="container"><div class="page-title"><div><p class="eyebrow">TLMTI SKILLS LMS</p><h1>' . e(tr($title)) . '</h1></div>';
-    if (!$public) { echo '<span class="live-tag"><span></span>' . e(tr('Learning for a better tomorrow')) . '</span>'; }
-    echo '</div>' . flash_render();
+    echo '</div></header><main class="container'.($compact?' compact-page':'').'">';
+    if($compact){echo '<h1 class="sr-only">'.e(tr($title)).'</h1>';}
+    else{echo '<div class="page-title"><div><p class="eyebrow">TLMTI SKILLS LMS</p><h1>'.e(tr($title)).'</h1></div>';if(!$public){echo '<span class="live-tag"><span></span>'.e(tr('Learning for a better tomorrow')).'</span>';}echo '</div>';}
+    echo flash_render();
+    if(!$public&&!in_array(current_page(),['dashboard.php','attendance.php'],true)&&\App\Services\AttendanceService::mode($u)==='selfie'&&!\App\Services\AttendanceService::today((int)$u['id'])){
+        echo '<div class="flash" role="status">'.e(tr('Your selfie attendance is pending today.')).' <a href="dashboard.php#daily-attendance-title">'.e(tr('Today attendance')).'</a></div>';
+    }
 }
 
 function page_footer(): void
 {
+    if(\App\Core\Auth::user()&&!in_array(current_page(),['dashboard.php','attendance.php'],true)){echo '<p class="attendance-shortcut"><a class="btn" href="dashboard.php#daily-attendance-title">'.icon('check').e(tr('Today attendance')).'</a></p>';}
     echo '<footer class="page-footer"><span>TLMTI Skills LMS</span><span>' . e(tr('Learn. Practise. Grow.')) . '</span></footer></main>';
     if (\App\Core\Auth::user()) {
         echo '</div><nav class="bottom-nav" aria-label="' . e(tr('Mobile navigation')) . '">';
@@ -100,5 +106,5 @@ function page_footer(): void
         }
         echo '</nav>';
     }
-    echo '<script src="assets/js/offline-db.js" defer></script><script src="assets/js/sync-client.js" defer></script><script src="assets/js/tts.js" defer></script><script src="assets/js/app-ui.js?v=20261026-4" defer></script></body></html>';
+    echo '<script src="assets/js/offline-db.js" defer></script><script src="assets/js/sync-client.js" defer></script><script src="assets/js/tts.js" defer></script><script src="assets/js/app-ui.js?v=20261026-6" defer></script><script src="assets/js/student-ui.js?v=20261026-2" defer></script><script src="assets/js/attendance.js?v=20261027-2" defer></script></body></html>';
 }

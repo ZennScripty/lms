@@ -18,7 +18,7 @@
   function net() { if (banner) { banner.hidden = navigator.onLine; } }
   w.addEventListener('online', function () { net(); if (w.TlmtiSync) { TlmtiSync.flush(); } });
   w.addEventListener('offline', net); net();
-  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function () {}); }
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').then(function(){return navigator.serviceWorker.ready;}).then(function(reg){ if(reg.active){reg.active.postMessage({type:'SET_USER',userId:body.getAttribute('data-user-id'),role:body.getAttribute('data-role')});} }).catch(function () {}); }
 
   // ---- generic helpers ----
   d.addEventListener('submit', function (e) {
@@ -32,7 +32,7 @@
     f.addEventListener('submit', function (e) {
       if (!w.caches) { return; }
       e.preventDefault();
-      caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k.indexOf('tlmti-pages') === 0 || k.indexOf('tlmti-content') === 0; }).map(function (k) { return caches.delete(k); })); })
+      caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k.indexOf('tlmti-pages') === 0 || k.indexOf('tlmti-user-pages') === 0 || k.indexOf('tlmti-content') === 0 || k === 'tlmti-offline-owner'; }).map(function (k) { return caches.delete(k); })); })
         .catch(function () {}).then(function () { f.submit(); });
     });
   });
@@ -43,7 +43,7 @@
     TlmtiSync.onChange(function (c) {
       $$('[data-sync-badge]').forEach(function (b) { b.textContent = String(fmt(c)); b.className = 'badge' + (fmt(c) ? ' badge-warn' : ''); });
       ['pending', 'synced', 'failed', 'rejected'].forEach(function (k) { text($('[data-count="' + k + '"]'), String(c[k])); });
-      text($('[data-last-sync]'), c.lastSync ? new Date(c.lastSync).toLocaleString() : 'never');
+      text($('[data-last-sync]'), c.lastSync ? new Date(c.lastSync).toLocaleString() : (d.documentElement.lang === 'hi' ? 'अभी तक नहीं' : 'never'));
       text($('[data-sync-message]'), c.error || '');
       decoratePending(); renderList();
     });
@@ -57,10 +57,10 @@
       tb.textContent = '';
       evs.sort(function (a, b) { return b.created_at - a.created_at; }).slice(0, 100).forEach(function (e) {
         var tr = d.createElement('tr');
-        [e.type, new Date(e.created_at).toLocaleString(), e.status, e.last_error || ''].forEach(function (v) { var td = d.createElement('td'); td.textContent = v; tr.appendChild(td); });
+        [e.type === 'study' ? (d.documentElement.lang === 'hi' ? 'अध्ययन' : 'Study') : e.type, new Date(e.created_at).toLocaleString(d.documentElement.lang === 'hi' ? 'hi-IN' : 'en-IN'), d.documentElement.lang === 'hi' ? ({pending:'लंबित',synced:'सिंक पूर्ण',failed:'विफल',rejected:'अस्वीकृत'}[e.status] || e.status) : e.status, e.last_error || ''].forEach(function (v) { var td = d.createElement('td'); td.textContent = v; tr.appendChild(td); });
         tb.appendChild(tr);
       });
-      if (!evs.length) { var tr = d.createElement('tr'), td = d.createElement('td'); td.colSpan = 4; td.className = 'muted'; td.textContent = 'Nothing queued on this device.'; tr.appendChild(td); tb.appendChild(tr); }
+      if (!evs.length) { var tr = d.createElement('tr'), td = d.createElement('td'); td.colSpan = 4; td.className = 'muted'; td.textContent = (d.documentElement.lang === 'hi' ? 'इस डिवाइस पर कोई लंबित गतिविधि नहीं है।' : 'Nothing queued on this device.'); tr.appendChild(td); tb.appendChild(tr); }
     });
   }
   $$('[data-sync-now]').forEach(function (b) { b.addEventListener('click', function () { TlmtiSync.flush(); }); });
@@ -71,8 +71,8 @@
   $$('[data-storage-info]').forEach(function (el) {
     if (!w.TlmtiDB) { return; }
     TlmtiDB.storageEstimate().then(function (s) {
-      if (!s) { el.textContent = 'Storage information is not available in this browser.'; return; }
-      el.textContent = 'Device storage used: ' + (s.usage / 1048576).toFixed(1) + ' MB of ' + (s.quota / 1048576).toFixed(0) + ' MB. Browsers may evict stored data under storage pressure; unsynced items are kept until synced.';
+      if (!s) { el.textContent = d.documentElement.lang === 'hi' ? 'इस ब्राउज़र में स्टोरेज जानकारी उपलब्ध नहीं है।' : 'Storage information is not available in this browser.'; return; }
+      el.textContent = d.documentElement.lang === 'hi' ? ('उपयोग किया गया स्टोरेज: ' + (s.usage / 1048576).toFixed(1) + ' MB / ' + (s.quota / 1048576).toFixed(0) + ' MB') : 'Device storage used: ' + (s.usage / 1048576).toFixed(1) + ' MB of ' + (s.quota / 1048576).toFixed(0) + ' MB. Browsers may evict stored data under storage pressure; unsynced items are kept until synced.';
     });
   });
 

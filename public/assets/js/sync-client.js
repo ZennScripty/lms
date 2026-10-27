@@ -2,6 +2,7 @@
 (function (w) {
   'use strict';
   var ctx = { userId: '', csrf: '' }, flushing = false, listeners = [];
+  function L(en,hi) { return document.documentElement.lang === 'hi' ? hi : en; }
   var MAX_ATTEMPTS = 5, TIMEOUT_MS = 15000, lastError = '';
 
   function uuid() {
@@ -16,7 +17,7 @@
     return TlmtiDB.allEvents().then(function (all) {
       var c = { pending: 0, synced: 0, failed: 0, rejected: 0 };
       all.forEach(function (e) { if (String(e.user_id) === String(ctx.userId) && c[e.status] !== undefined) { c[e.status]++; } });
-      return TlmtiDB.getMeta('last_sync').then(function (t) { c.lastSync = t; c.error = lastError; return c; });
+      return TlmtiDB.getMeta('last_sync:'+ctx.userId).then(function (t) { c.lastSync = t; c.error = lastError; return c; });
     });
   }
   function notify() { return counts().then(function (c) { listeners.forEach(function (f) { f(c); }); return c; }).catch(function () {}); }
@@ -24,8 +25,8 @@
   function init(o) {
     ctx.userId = o.userId || '';
     var p = Promise.resolve();
-    if (navigator.onLine && o.csrf) { ctx.csrf = o.csrf; p = TlmtiDB.setMeta('csrf', o.csrf); }
-    else { p = TlmtiDB.getMeta('csrf').then(function (t) { ctx.csrf = t || o.csrf || ''; }); }
+    if (navigator.onLine && o.csrf) { ctx.csrf = o.csrf; p = TlmtiDB.setMeta('csrf:'+ctx.userId, o.csrf); }
+    else { p = TlmtiDB.getMeta('csrf:'+ctx.userId).then(function (t) { ctx.csrf = t || o.csrf || ''; }); }
     return p.then(notify);
   }
 
@@ -73,10 +74,10 @@
           if (stop) { return true; }
           var evs = groups[page];
           return post(page, evs).then(function (res) {
-            if (res.status === 401) { lastError = 'Session expired. Log in again to sync.'; return true; }
-            if (res.status === 419) { lastError = 'Security token expired. Reload an online page, then sync again.'; return true; }
-            if (res.status === 403) { lastError = 'You are not allowed to sync these events.'; return markAll(evs, function () { return { status: 'rejected', last_error: 'forbidden' }; }).then(function () { return false; }); }
-            if (res.status >= 400 || !res.json || !res.json.results) { lastError = 'Server error. Will retry.'; return markAll(evs, function (e) { return bump(e, 'server ' + res.status); }).then(function () { return false; }); }
+            if (res.status === 401) { lastError = L('Session expired. Log in again to sync.','सेशन समाप्त हुआ। सिंक करने के लिए फिर लॉग इन करें।'); return true; }
+            if (res.status === 419) { lastError = L('Security token expired. Reload an online page, then sync again.','सुरक्षा टोकन समाप्त हुआ। ऑनलाइन पृष्ठ फिर खोलकर सिंक करें।'); return true; }
+            if (res.status === 403) { lastError = L('You are not allowed to sync these events.','इन गतिविधियों को सिंक करने की अनुमति नहीं है।'); return markAll(evs, function () { return { status: 'rejected', last_error: 'forbidden' }; }).then(function () { return false; }); }
+            if (res.status >= 400 || !res.json || !res.json.results) { lastError = L('Server error. Will retry.','सर्वर त्रुटि। फिर प्रयास करेंगे।'); return markAll(evs, function (e) { return bump(e, 'server ' + res.status); }).then(function () { return false; }); }
             var map = {}; res.json.results.forEach(function (r) { map[r.event_uuid] = r; });
             return markAll(evs, function (e) {
               var r = map[e.event_uuid];
@@ -86,12 +87,12 @@
               return { status: 'rejected', last_error: r.message || 'rejected' };
             }).then(function () { return false; });
           }).catch(function (err) {
-            lastError = err && err.name === 'AbortError' ? 'Server timeout. Will retry.' : 'Network error. Will retry.';
+            lastError = err && err.name === 'AbortError' ? L('Server timeout. Will retry.','सर्वर ने समय पर उत्तर नहीं दिया। फिर प्रयास करेंगे।') : L('Network error. Will retry.','नेटवर्क त्रुटि। फिर प्रयास करेंगे।');
             return markAll(evs, function (e) { return bump(e, lastError); }).then(function () { return true; });
           });
         });
       }, Promise.resolve(false)).then(function () {
-        if (done.length) { TlmtiDB.setMeta('last_sync', new Date().toISOString()); }
+        if (done.length) { TlmtiDB.setMeta('last_sync:'+ctx.userId, new Date().toISOString()); }
         w.dispatchEvent(new CustomEvent('tlmti:synced', { detail: { results: done } }));
       });
     }).catch(function (e) { lastError = String(e && e.message || e); })

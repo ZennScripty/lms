@@ -10,6 +10,11 @@ $error=null;$formData=null;
 if(is_post()) {
     Csrf::verifyRequest();
     try {
+        if(request_action()==='assign_subjects'){
+            $result=M::assignSubjects($section,$_POST);
+            flash('success',tr('Subjects added').': '.$result['created'].' · '.tr('Existing assignments kept').': '.$result['existing']);
+            redirect(current_page().'?view='.$section);
+        }
         if(request_action()!=='save_record'){throw new DomainException('Unknown action.');}
         $id=V::optInt($_POST['id']??null,'ID');
         M::save($section,$id,$_POST);
@@ -56,6 +61,10 @@ $rows=DB::all('SELECT '.M::translatedSelect($section)." FROM $table x WHERE $whe
 $baseQuery=$_GET;unset($baseQuery['edit'],$baseQuery['new']);
 $link=static fn(array $extra)=>current_page().'?'.http_build_query(array_merge($baseQuery,$extra));
 page_header($def['title']);
+if($section==='attendance'){
+    require APP_ROOT.'/app/Views/attendance_checkin.php';
+    if(Authorization::isSuperAdmin()){echo '<p><a class="btn" href="app_settings.php">'.e(tr('Attendance settings')).'</a></p>';}
+}
 if(in_array(current_page(),['modules.php','subjects.php','users.php','tests.php'],true)) {
     $tabs=match(current_page()) {
         'modules.php'=>['modules'=>'Modules','lessons'=>'Lessons','media'=>'Media library'],
@@ -70,6 +79,16 @@ if(in_array(current_page(),['modules.php','subjects.php','users.php','tests.php'
 ?>
 <div class="toolbar"><p><?= $total ?> <?= e(tr('records')) ?></p><?php if($canWrite): ?><a href="<?= e($link(['new'=>1])) ?>" class="btn btn-primary"><?= icon('plus') ?><?= e(tr('Add record')) ?></a><?php endif; ?></div>
 <?php if($error): ?><div class="flash flash-error" role="alert"><?= e(tr($error)) ?></div><?php endif; ?>
+<?php if(Authorization::isSuperAdmin()&&in_array($section,['assignments','enrolments'],true)): $personKey=$section==='assignments'?'teacher_id':'student_id'; ?>
+<details class="card"<?= $formData&&request_action()==='assign_subjects'?' open':'' ?>><summary><strong><?= e(tr('Assign multiple subjects')) ?></strong></summary>
+<p class="muted"><?= e(tr('Select all required subjects. Existing assignments and progress will be kept.')) ?></p>
+<form method="post" class="form-grid"><?= csrf_field() ?><input type="hidden" name="action" value="assign_subjects">
+<label><?= e(tr($section==='assignments'?'Teacher':'Student')) ?><select name="<?= $personKey ?>" required><option value=""><?= e(tr('Select')) ?></option><?php foreach(M::options($section==='assignments'?'teachers':'students') as $o): ?><option value="<?= (int)$o['id'] ?>"<?= selected($o['id'],$formData[$personKey]??'') ?>><?= e($o['label']) ?></option><?php endforeach; ?></select></label>
+<?php if($section==='enrolments'): ?><label><?= e(tr('Batch')) ?><select name="batch_id"><option value=""><?= e(tr('Select')) ?></option><?php foreach(M::options('batches') as $o): ?><option value="<?= (int)$o['id'] ?>"<?= selected($o['id'],$formData['batch_id']??'') ?>><?= e($o['label']) ?></option><?php endforeach; ?></select></label><input type="hidden" name="status" value="active">
+<?php else: foreach(['can_manage_content'=>'Can manage content','can_manage_tests'=>'Can manage tests'] as $key=>$label): ?><label class="check"><input type="checkbox" name="<?= $key ?>" value="1"<?= checked(isset($formData[$key])) ?>><?= e(tr($label)) ?></label><?php endforeach; endif; ?>
+<fieldset class="wide"><legend><?= e(tr('Subjects')) ?></legend><div class="assignment-grid"><?php foreach(M::options('subjects') as $o): if(!$o['is_active'])continue; ?><label class="check"><input type="checkbox" name="subject_ids[]" value="<?= (int)$o['id'] ?>"<?= checked(in_array((string)$o['id'],array_map('strval',is_array($formData['subject_ids']??null)?$formData['subject_ids']:[]),true)) ?>><?= e($o['label']) ?></label><?php endforeach; ?></div></fieldset>
+<div class="form-actions"><button class="btn btn-primary"><?= e(tr('Assign selected subjects')) ?></button></div></form></details>
+<?php endif; ?>
 <?php if($showForm): $row=$edit??[]; ?>
 <section class="card" id="record-form"><h2><?= e(tr(isset($_GET['edit'])?'Edit record':'Add record')) ?></h2>
 <form method="post" class="form-grid"><?= csrf_field() ?><input type="hidden" name="action" value="save_record"><input type="hidden" name="id" value="<?= e((string)($row['id']??'')) ?>">
@@ -109,6 +128,7 @@ foreach($rows as $r): ?>
 <?php elseif(in_array($key,['full_name','name'],true)): ?><div class="name-cell"><span class="avatar"><?= e(mb_substr($r[$key],0,1)) ?></span><strong><?= e($r[$key]) ?></strong></div>
 <?php else: ?><?= e(in_array($key,['training_mode','attendance_for','difficulty','test_type','item_type'],true)?tr((string)($r[$key]??'')):(string)($r[$key]??'—')) ?><?php endif; ?></td><?php endforeach; ?>
 <td class="actions"><?php if(M::canWrite($section,isset($r['subject_id'])?(int)$r['subject_id']:null)): ?><a class="btn btn-sm" href="<?= e($link(['edit'=>$r['id']])) ?>"><?= e(tr('Edit')) ?></a><?php endif; ?>
+<?php if($section==='attendance'&&!empty($r['selfie_path'])): ?><a class="btn btn-sm" href="attendance_selfie.php?id=<?= (int)$r['id'] ?>"><?= e(tr('View selfie')) ?></a><?php endif; ?>
 <?php if($section==='lessons'): ?><a class="btn btn-sm" href="lesson.php?id=<?= (int)$r['id'] ?>"><?= e(tr('Preview')) ?></a><?php elseif($section==='subjects'): ?><a class="btn btn-sm" href="modules.php?subject_id=<?= (int)$r['id'] ?>"><?= e(tr('Modules')) ?></a><?php elseif(($section==='students'||($section==='users'&&(int)$r['role_id']===(int)DB::val("SELECT id FROM roles WHERE code='student'")))): ?><a class="btn btn-sm" href="student_detail.php?id=<?= (int)$r['id'] ?>"><?= e(tr('View')) ?></a><?php endif; ?></td></tr>
 <?php endforeach; ?><?php if(!$rows): ?><tr><td colspan="<?= count($def['columns'])+1 ?>"><div class="empty-state"><?= icon('search') ?><p><?= e(tr('No results found.')) ?></p></div></td></tr><?php endif; ?>
 </tbody></table></div></section>

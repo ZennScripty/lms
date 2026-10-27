@@ -63,3 +63,5 @@ $result=DB::transaction(function(){
     return count($rows).' synthetic assessment results inserted.';
 });
 echo $result.PHP_EOL;
+
+DB::run("INSERT IGNORE INTO test_translations (test_id,language_id,title) SELECT t.id,mt.language_id,CONCAT(mt.title,' - नमूना टेस्ट') FROM tests t JOIN modules m ON m.id=t.module_id JOIN module_translations mt ON mt.module_id=m.id JOIN languages l ON l.id=mt.language_id WHERE m.code LIKE 'DEMO-%' AND t.title LIKE '% - Demo assessment' AND l.code='hi'");

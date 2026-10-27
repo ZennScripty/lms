@@ -31,13 +31,36 @@ final class ManagementService
                 'subject_id'=>['Subject','ref','subjects'], 'module_id'=>['Module','ref_optional','modules'], 'difficulty'=>['Difficulty','enum',['easy','medium','hard']], 'default_marks'=>['Marks','int',1,100], 'status'=>['Status','enum',['draft','published','archived']], 'question_en'=>['Question (English)','text',5000], 'question_hi'=>['Question (Hindi)','text',5000],
                 'option_a_en'=>['Option A (English)','text',500], 'option_a_hi'=>['Option A (Hindi)','text',500], 'option_b_en'=>['Option B (English)','text',500], 'option_b_hi'=>['Option B (Hindi)','text',500], 'option_c_en'=>['Option C (English)','text',500], 'option_c_hi'=>['Option C (Hindi)','text',500], 'option_d_en'=>['Option D (English)','text',500], 'option_d_hi'=>['Option D (Hindi)','text',500], 'correct_option'=>['Correct option','enum',['A','B','C','D']]]],
             'tests'=>['title'=>'Tests','table'=>'tests','search'=>['title'],'columns'=>['title'=>'Test title','subject_id'=>'Subject','test_type'=>'Test type','pass_percent'=>'Pass %','status'=>'Status'],'fields'=>[
-                'title'=>['Test title','text',200], 'subject_id'=>['Subject','ref','subjects'], 'test_type'=>['Test type','enum',['weekly','module','practice']], 'week_no'=>['Week','int',1,52], 'module_id'=>['Module','ref_optional','modules'], 'duration_minutes'=>['Duration (minutes)','int',0,1440], 'pass_percent'=>['Pass %','int',1,100], 'pass_rule'=>['Pass rule','enum',['gte','gt']], 'max_attempts'=>['Maximum attempts','int_optional',1,255], 'retake_wait_hours'=>['Retake wait (hours)','int',0,65535], 'min_study_percent'=>['Minimum completion %','int',0,100], 'status'=>['Status','enum',['draft','published','archived']]]],
-            'attendance'=>['title'=>'Attendance','table'=>'attendance_records','search'=>[],'columns'=>['user_id'=>'User','attendance_date'=>'Date','attendance_for'=>'Attendance for','status'=>'Status','remarks'=>'Remarks'],'fields'=>[
-                'user_id'=>['User','ref','attendance_users'], 'attendance_date'=>['Date','required_date'], 'attendance_for'=>['Attendance for','enum',['student','teacher']], 'status'=>['Status','enum',['present','absent','late','half_day','leave','holiday']], 'remarks'=>['Remarks','optional',500]]],
+                'title'=>['Test title','text',200], 'title_hi'=>['Test title (Hindi)','optional',200], 'subject_id'=>['Subject','ref','subjects'], 'test_type'=>['Test type','enum',['weekly','module','practice']], 'week_no'=>['Week','int',1,52], 'module_id'=>['Module','ref_optional','modules'], 'duration_minutes'=>['Duration (minutes)','int',0,1440], 'pass_percent'=>['Pass %','int',1,100], 'pass_rule'=>['Pass rule','enum',['gte','gt']], 'max_attempts'=>['Maximum attempts','int_optional',1,255], 'retake_wait_hours'=>['Retake wait (hours)','int',0,65535], 'min_study_percent'=>['Minimum completion %','int',0,100], 'status'=>['Status','enum',['draft','published','archived']]]],
+            'attendance'=>['title'=>'Attendance','table'=>'attendance_records','search'=>[],'columns'=>['user_id'=>'User','attendance_date'=>'Date','attendance_for'=>'Attendance for','status'=>'Status','check_in_time'=>'Check-in time','check_out_time'=>'Check-out time','checkin_mode'=>'Check-in method','remarks'=>'Remarks'],'fields'=>[
+                'user_id'=>['User','ref','attendance_users'], 'attendance_date'=>['Date','required_date'], 'attendance_for'=>['Attendance for','enum',['student','teacher','admin']], 'status'=>['Status','enum',['present','absent','late','half_day','leave','holiday']], 'remarks'=>['Remarks','optional',500]]],
         ];
     }
 
     public static function isStaff(): bool { return Authorization::isSuperAdmin() || Authorization::isTeacher(); }
+    /** Add subjects without replacing existing assignments, permissions or learning history. */
+    public static function assignSubjects(string $section,array $input): array
+    {
+        if(!Authorization::isSuperAdmin()||!in_array($section,['assignments','enrolments'],true)){forbidden();}
+        $raw=$input['subject_ids']??[];
+        if(!is_array($raw)||count($raw)>200){throw new \DomainException('Choose between 1 and 200 subjects.');}
+        $subjects=[];foreach($raw as $value){$subjects[]=V::int($value,'Subject',1);}
+        $subjects=array_values(array_unique($subjects));
+        if(!$subjects){throw new \DomainException('Choose at least one subject.');}
+        $person=$section==='assignments'?'teacher_id':'student_id';
+        $personId=V::int($input[$person]??'','User',1);
+        return DB::transaction(function()use($section,$input,$subjects,$person,$personId){
+            // Serialize concurrent bulk requests for this person; each subject remains independent.
+            DB::one('SELECT id FROM users WHERE id=? FOR UPDATE',[$personId]);
+            $created=0;$existing=0;$table=self::definitions()[$section]['table'];
+            foreach($subjects as $subject){
+                if(!DB::val('SELECT id FROM subjects WHERE id=? AND is_active=1',[$subject])){throw new \DomainException('Choose active subjects only.');}
+                if(DB::val("SELECT id FROM $table WHERE $person=? AND subject_id=?",[$personId,$subject])){$existing++;continue;}
+                self::save($section,null,array_merge($input,[$person=>$personId,'subject_id'=>$subject]));$created++;
+            }
+            return ['created'=>$created,'existing'=>$existing];
+        });
+    }
     public static function checkSection(string $section): void
     {
         Auth::requireLogin();
@@ -80,10 +103,10 @@ final class ManagementService
             'roles'=>'SELECT id,name AS label FROM roles ORDER BY id',
             'teachers'=>"SELECT u.id,u.full_name AS label FROM users u JOIN roles r ON r.id=u.role_id WHERE r.code='teacher' AND u.deleted_at IS NULL ORDER BY u.full_name",
             'students'=>"SELECT u.id,u.full_name AS label FROM users u JOIN roles r ON r.id=u.role_id WHERE r.code='student' AND u.deleted_at IS NULL ORDER BY u.full_name",
-            'subjects'=>'SELECT x.id,x.name AS label FROM subjects x WHERE ',
+            'subjects'=>'SELECT x.id,x.name AS label,x.is_active FROM subjects x WHERE ',
             'modules'=>"SELECT x.id,COALESCE((SELECT title FROM module_translations mt JOIN languages l ON l.id=mt.language_id WHERE mt.module_id=x.id AND l.code='$lang' LIMIT 1), x.code, CONCAT('#',x.id)) AS label FROM modules x WHERE ",
             'media_assets'=>'SELECT id,original_name AS label FROM media_assets WHERE ' . (Authorization::isSuperAdmin() ? '1=1' : 'uploaded_by=' . (int)Auth::user()['id']) . ' ORDER BY id DESC',
-            'attendance_users'=>"SELECT u.id,CONCAT(u.full_name,' · ',r.name) AS label FROM users u JOIN roles r ON r.id=u.role_id WHERE u.deleted_at IS NULL AND r.code IN ('teacher','student') ORDER BY u.full_name",
+            'attendance_users'=>"SELECT u.id,CONCAT(u.full_name,' · ',r.name) AS label FROM users u JOIN roles r ON r.id=u.role_id WHERE u.deleted_at IS NULL AND r.code IN ('teacher','student','admin') ORDER BY u.full_name",
         ];
         if (!isset($queries[$kind])) { throw new \LogicException('Unknown option source'); }
         $params=[];
@@ -108,7 +131,7 @@ final class ManagementService
     }
     public static function hydrate(string $section,array $row): array
     {
-        $map=['modules'=>['module_translations','module_id',['title'=>'title','description'=>'description']], 'lessons'=>['content_item_translations','content_item_id',['title'=>'title','body_text'=>'body']], 'questions'=>['question_translations','question_id',['question_text'=>'question']]];
+        $map=['tests'=>['test_translations','test_id',['title'=>'title']], 'modules'=>['module_translations','module_id',['title'=>'title','description'=>'description']], 'lessons'=>['content_item_translations','content_item_id',['title'=>'title','body_text'=>'body']], 'questions'=>['question_translations','question_id',['question_text'=>'question']]];
         if (isset($map[$section])) {
             [$table,$fk,$fields]=$map[$section];
             foreach(DB::all("SELECT t.*,l.code FROM $table t JOIN languages l ON l.id=t.language_id WHERE t.$fk=? AND l.code IN ('en','hi')",[$row['id']]) as $t) {
@@ -165,6 +188,7 @@ final class ManagementService
             if($role!==$data['attendance_for']||(!Authorization::isSuperAdmin()&&$role!=='student')){throw new \DomainException('Attendance type does not match this user.');}
             $duplicate=DB::val('SELECT id FROM attendance_records WHERE user_id=? AND attendance_date=? AND id<>?',[$data['user_id'],$data['attendance_date'],$id??0]);
             if($duplicate){throw new \DomainException('Attendance already exists for this user and date. Edit that record.');}
+            if($old&&((int)$old['user_id']!==(int)$data['user_id']||$old['attendance_date']!==$data['attendance_date']||$old['attendance_for']!==$data['attendance_for'])){throw new \DomainException('Attendance owner and date cannot be changed. Correct the status or remarks.');}
             $data['marked_by']=$uid;
         }
         if($section==='enrolments'&&!empty($data['batch_id'])) {
@@ -182,6 +206,15 @@ final class ManagementService
             if($data['status']==='published'&&!$questionIds){throw new \DomainException('Published tests need at least one question.');}
         }
         return DB::transaction(function()use($section,$def,$id,$data,$extra,$uid,$questionIds){
+            if($section==='attendance'){
+                DB::one('SELECT id FROM users WHERE id=? FOR UPDATE',[$data['user_id']]);
+                if(DB::val('SELECT id FROM attendance_records WHERE user_id=? AND attendance_date=? AND id<>?',[$data['user_id'],$data['attendance_date'],$id??0])){throw new \DomainException('Attendance already exists for this user and date. Edit that record.');}
+            }
+            if($id&&in_array($section,['tests','questions'],true)){
+                DB::one('SELECT id FROM '.$def['table'].' WHERE id=? FOR UPDATE',[$id]);
+                $used=$section==='tests'?DB::val('SELECT COUNT(*) FROM test_attempts WHERE test_id=?',[$id]):DB::val('SELECT COUNT(*) FROM test_attempts a JOIN test_questions tq ON tq.test_id=a.test_id WHERE tq.question_id=?',[$id]);
+                if($used){throw new \DomainException('This record has attempts. Create a new version instead of changing historical results.');}
+            }
             if(!$id && in_array($section,['subjects','modules','lessons','questions','tests'],true)){$data['created_by']=$uid;}
             if(!$id && $section==='assignments'){$data['assigned_by']=$uid;}
             if(!$id && $section==='enrolments'){$data['enrolled_by']=$uid;}
@@ -190,6 +223,7 @@ final class ManagementService
             else{$id=DB::insert("INSERT INTO $table (`".implode('`,`',$keys).'`) VALUES ('.DB::in($keys).')',array_values($data));}
             foreach(['en','hi'] as $lang) {
                 $lid=(int)DB::val('SELECT id FROM languages WHERE code=?',[$lang]);
+                if($section==='tests'){ $title=$lang==='en'?$data['title']:($extra['title_hi']??null);if($title){DB::run('INSERT INTO test_translations (test_id,language_id,title) VALUES (?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title)',[$id,$lid,$title]);}elseif($lang==='hi'){DB::run('DELETE FROM test_translations WHERE test_id=? AND language_id=?',[$id,$lid]);} }
                 if($section==='modules'){DB::run('INSERT INTO module_translations (module_id,language_id,title,description) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title),description=VALUES(description)',[$id,$lid,$extra['title_'.$lang],$extra['description_'.$lang]]);}
                 if($section==='lessons'){DB::run('INSERT INTO content_item_translations (content_item_id,language_id,title,body_text,media_asset_id) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title),body_text=VALUES(body_text),media_asset_id=VALUES(media_asset_id)',[$id,$lid,$extra['title_'.$lang],$extra['body_'.$lang],$extra['media_asset_id']]);}
                 if($section==='questions'){DB::run('INSERT INTO question_translations (question_id,language_id,question_text) VALUES (?,?,?) ON DUPLICATE KEY UPDATE question_text=VALUES(question_text)',[$id,$lid,$extra['question_'.$lang]]);}

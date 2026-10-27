@@ -1,58 +1,21 @@
-/* TLMTI service worker: app shell + previously visited / downloaded pages. It never talks to a server API. */
+/* Authenticated student caches are partitioned by account and cleared on logout/account change. */
 'use strict';
-var VERSION = 'v3-light';
-var SHELL = 'tlmti-shell-' + VERSION;
-var PAGES = 'tlmti-pages-' + VERSION;
-var CONTENT = 'tlmti-content-v1';          // lesson pages downloaded from offline_downloads.php
-var SHELL_ASSETS = ['assets/css/app.css', 'assets/js/app-ui.js', 'assets/js/offline-db.js', 'assets/js/sync-client.js',
-  'assets/js/tts.js', 'manifest.webmanifest', 'assets/icons/icon.svg'];
-var CACHEABLE = ['lesson.php', 'offline_downloads.php'];
-
-function abs(p) { return new URL(p, self.registration.scope).toString(); }
-
-self.addEventListener('install', function (e) {
-  e.waitUntil(caches.open(SHELL).then(function (c) { return c.addAll(SHELL_ASSETS.map(abs)); }).then(function () { return self.skipWaiting(); }));
-});
-
-self.addEventListener('activate', function (e) {
-  e.waitUntil(caches.keys().then(function (keys) {
-    return Promise.all(keys.filter(function (k) { return k.indexOf('tlmti-') === 0 && [SHELL, PAGES, CONTENT].indexOf(k) === -1; })
-      .map(function (k) { return caches.delete(k); }));
-  }).then(function () { return self.clients.claim(); }));
-});
-
-function offlineResponse() {
-  return new Response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline</title>' +
-    '<body style="font-family:sans-serif;padding:2rem"><h1>You are offline</h1><p>This page has not been downloaded to this device. ' +
-    'Open it once while online, or use Downloads to save lessons.</p></body>', { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
-}
-
-self.addEventListener('fetch', function (e) {
-  var req = e.request;
-  if (req.method !== 'GET') { return; }
-  var url = new URL(req.url);
-  if (url.origin !== self.location.origin) { return; }
-  var file = url.pathname.split('/').pop();
-
-  if (req.mode === 'navigate') {
-    e.respondWith(fetch(req).then(function (res) {
-      if (res.ok && !res.redirected && CACHEABLE.indexOf(file) !== -1) {
-        var copy = res.clone();
-        caches.open(PAGES).then(function (c) { c.put(req, copy); });
-      }
-      return res;
-    }).catch(function () {
-      return caches.match(req).then(function (hit) { return hit || offlineResponse(); });
-    }));
-    return;
-  }
-  if (SHELL_ASSETS.some(function (a) { return abs(a) === url.origin + url.pathname; })) {
-    e.respondWith(caches.match(req).then(function (hit) {
-      var net = fetch(req).then(function (res) {
-        if (res.ok) { var copy = res.clone(); caches.open(SHELL).then(function (c) { c.put(req, copy); }); }
-        return res;
-      }).catch(function () { return hit; });
-      return hit || net;
-    }));
-  }
+var VERSION='student-v4',SHELL='tlmti-shell-'+VERSION,OWNER='tlmti-offline-owner';
+var ASSETS=['assets/css/app.css','assets/js/app-ui.js','assets/js/student-ui.js','assets/js/attendance.js','assets/js/offline-db.js','assets/js/sync-client.js','assets/js/tts.js','manifest.webmanifest','assets/icons/icon.svg'];
+var PAGES=['dashboard.php','courses.php','progress.php','lesson.php','tests.php','offline_downloads.php','sync_status.php'];
+function abs(p){return new URL(p,self.registration.scope).href;}
+function owner(){return caches.open(OWNER).then(function(c){return c.match(abs('__owner'));}).then(function(r){return r?r.json():null;});}
+function clearPrivate(){return caches.keys().then(function(keys){return Promise.all(keys.filter(function(k){return k.indexOf('tlmti-user-pages-')===0||k.indexOf('tlmti-content')===0||k.indexOf('tlmti-pages')===0;}).map(function(k){return caches.delete(k);}));});}
+var ownerWork=Promise.resolve();
+function setOwner(user,role){ownerWork=ownerWork.then(function(){return owner().then(function(old){if(old&&old.user===String(user)&&old.role===role){return;}return clearPrivate().then(function(){return caches.open(OWNER);}).then(function(c){return c.put(abs('__owner'),new Response(JSON.stringify({user:String(user||''),role:role||''}),{headers:{'Content-Type':'application/json'}}));});});});return ownerWork;}
+self.addEventListener('install',function(e){e.waitUntil(caches.open(SHELL).then(function(c){return c.addAll(ASSETS.map(abs));}).then(function(){return self.skipWaiting();}));});
+self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(keys){return Promise.all(keys.filter(function(k){return k.indexOf('tlmti-shell-')===0&&k!==SHELL;}).map(function(k){return caches.delete(k);}));}).then(function(){return self.clients.claim();}));});
+self.addEventListener('message',function(e){var data=e.data||{};if(data.type==='SET_USER'){e.waitUntil(setOwner(data.userId,data.role));}});
+function offline(){return new Response('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline / ऑफ़लाइन</title><body><h1>Offline / ऑफ़लाइन</h1><p>This page is not downloaded. Connect and sign in to continue.</p><p>यह पृष्ठ डाउनलोड नहीं है। इंटरनेट से जुड़कर लॉग इन करें।</p></body></html>',{status:503,headers:{'Content-Type':'text/html; charset=utf-8'}});}
+function privateMatch(request){if(new URL(request.url).pathname.split('/').pop()==='attendance.php'){return Promise.resolve(null);}return owner().then(function(o){if(!o||o.role!=='student'||!o.user){return null;}return caches.open('tlmti-content-user-'+o.user).then(function(c){return c.match(request);}).then(function(hit){if(hit){return hit;}return caches.open('tlmti-user-pages-'+o.user).then(function(c){return c.match(request);});});});}
+function rangeResponse(request,response){var range=request.headers.get('Range');if(!range){return response;}return response.arrayBuffer().then(function(buffer){var m=/^bytes=(\d*)-(\d*)$/.exec(range),length=buffer.byteLength;if(!m||(!m[1]&&!m[2])){return new Response(null,{status:416,headers:{'Content-Range':'bytes */'+length}});}var start=m[1]?Number(m[1]):Math.max(0,length-Number(m[2])),end=m[2]&&m[1]?Math.min(length-1,Number(m[2])):length-1;if(start>end||start>=length){return new Response(null,{status:416,headers:{'Content-Range':'bytes */'+length}});}var headers=new Headers(response.headers);headers.set('Content-Range','bytes '+start+'-'+end+'/'+length);headers.set('Content-Length',String(end-start+1));headers.set('Accept-Ranges','bytes');return new Response(buffer.slice(start,end+1),{status:206,headers:headers});});}
+self.addEventListener('fetch',function(e){var req=e.request,url=new URL(req.url);if(req.method!=='GET'||url.origin!==self.location.origin){return;}var file=url.pathname.split('/').pop();
+ if(ASSETS.some(function(a){return abs(a)===url.origin+url.pathname;})){e.respondWith(fetch(req).then(function(r){if(r.ok){var copy=r.clone();caches.open(SHELL).then(function(c){c.put(req,copy);});}return r;}).catch(function(){return caches.open(SHELL).then(function(c){return c.match(req,{ignoreSearch:true});});}));return;}
+ if(req.mode==='navigate'){e.respondWith(fetch(req).then(function(response){var user=response.headers.get('X-TLMTI-User'),role=response.headers.get('X-TLMTI-Role');if(response.ok&&!response.redirected&&role==='student'&&response.headers.get('X-TLMTI-Cache')!=='no'&&PAGES.indexOf(file)!==-1){var copy=response.clone();e.waitUntil(setOwner(user,role).then(function(){return caches.open('tlmti-user-pages-'+user);}).then(function(c){return c.put(req,copy);}));}else if(file==='login.php'){e.waitUntil(setOwner('',''));}return response;}).catch(function(){return privateMatch(req).then(function(hit){return hit||offline();});}));return;}
+ if(file==='media.php'){e.respondWith(fetch(req).catch(function(){return privateMatch(req).then(function(hit){return hit?rangeResponse(req,hit):offline();});}));}
 });

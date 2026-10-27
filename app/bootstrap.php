@@ -55,3 +55,5 @@ if (is_post() && in_array(request_action(), ['logout', 'set_language'], true)) {
     }
     redirect_self();
 }
+
+// Page opens only read attendance. In/Out are explicit CSRF-protected POST actions.

@@ -1,6 +1,6 @@
 # TLMTI — Single-Page Core PHP Application
 
-> Local Admin/Teacher release: see [Admin and Teacher module](docs/ADMIN_TEACHER.md) for the current schema-compatible workflows, demo accounts, verification, local media and Redis setup status. The older student/offline implementation described below still needs its own database compatibility pass.
+> Current local release: see [Admin and Teacher module](docs/ADMIN_TEACHER.md) and [Student module](docs/STUDENT_MODULE.md) for the schema-compatible workflows, demo accounts, verification, offline behaviour, local media and Redis setup status. The historical implementation notes below describe the original core; the linked module guides describe the active dispatchers and learning rules.
 
 Core PHP 8.1+ · PDO · MySQL/MariaDB · no framework · no AI features · **no `/api/...` routes**.
 

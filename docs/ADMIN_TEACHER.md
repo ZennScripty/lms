@@ -1,6 +1,6 @@
 # Admin and Teacher module
 
-This local release uses the existing `lms` database without schema migrations. It keeps the existing PHP routes and authentication. Database-backed staff views are dispatched in `app/Support/staff_dispatch.php`; student handlers remain in their existing pages. Student learning and offline sync still need a separate schema alignment and acceptance pass before that module is ready.
+This local release uses the existing `lms` database. The daily check-in update adds attendance metadata through `scripts/migrate-attendance-checkin.php`, preserving records. It keeps the existing PHP routes and authentication. Database-backed staff views are dispatched in `app/Support/staff_dispatch.php`; student flows are documented in [Student module](STUDENT_MODULE.md). Staff progress reports use each module's current study cycle so weekly re-study does not double-count earlier progress. See [Multiple subjects and attendance](MULTIPLE_SUBJECTS_ATTENDANCE.md) for bulk subject assignment and Admin-controlled simple/selfie attendance.
 
 ## Appearance and languages
 

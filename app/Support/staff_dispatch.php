@@ -20,3 +20,5 @@ if (M::isStaff()) {
         require APP_ROOT.'/app/Views/staff_'.match($page){'reports.php','student_detail.php'=>'reports','sync_status.php'=>'logs','app_settings.php'=>'settings','roles_permissions.php'=>'roles',default=>'languages'}.'.php';exit;
     }
 }
+
+require_once APP_ROOT . '/app/Support/student_dispatch.php';

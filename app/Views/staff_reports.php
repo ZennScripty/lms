@@ -10,7 +10,7 @@ if($studentId){$where.=' AND u.id=?';$params[]=$studentId;}
 $subject=filter_var($_GET['subject_id']??null,FILTER_VALIDATE_INT)?:null;
 if($subject){$where.=' AND ss.subject_id=?';$params[]=$subject;}
 $select="SELECT u.id,u.full_name,u.username,s.name AS subject,b.name AS batch,
-COALESCE((SELECT SUM(mp.completion_percent) FROM module_progress mp JOIN modules m ON m.id=mp.module_id WHERE mp.student_id=u.id AND mp.subject_id=s.id AND m.status='published' AND m.deleted_at IS NULL)/NULLIF((SELECT COUNT(*) FROM modules m WHERE m.subject_id=s.id AND m.status='published' AND m.deleted_at IS NULL),0),0) AS completion,
+COALESCE((SELECT SUM(mp.completion_percent) FROM module_progress mp JOIN modules m ON m.id=mp.module_id LEFT JOIN student_week_state ws ON ws.student_id=mp.student_id AND ws.subject_id=mp.subject_id AND ws.week_no=m.week_no WHERE mp.student_id=u.id AND mp.subject_id=s.id AND m.status='published' AND m.deleted_at IS NULL AND mp.cycle_no=COALESCE(ws.cycle_no,1))/NULLIF((SELECT COUNT(*) FROM modules m WHERE m.subject_id=s.id AND m.status='published' AND m.deleted_at IS NULL),0),0) AS completion,
 (SELECT ROUND(AVG(ta.percentage),1) FROM test_attempts ta WHERE ta.student_id=u.id AND ta.subject_id=s.id AND ta.result<>'pending') AS test_score,
 (SELECT COUNT(*) FROM attendance_records ar WHERE ar.user_id=u.id AND ar.status='present') AS present_days
 FROM student_subjects ss JOIN users u ON u.id=ss.student_id JOIN subjects s ON s.id=ss.subject_id LEFT JOIN batches b ON b.id=ss.batch_id WHERE $where";
