@@ -8,12 +8,25 @@ final class StudentService
 {
     public static function enrolment(int $student,int $subject,bool $lock=false): ?array
     {
+        if(AssignmentAccessService::forStudent($student)){
+            if($lock)DB::one('SELECT id FROM users WHERE id=? FOR UPDATE',[$student]);
+            if(!AssignmentAccessService::canStudy($student,$subject))return null;
+            $row=DB::one('SELECT * FROM student_subjects WHERE student_id=? AND subject_id=?'.($lock?' FOR UPDATE':''),[$student,$subject])??[];
+            $next=(int)DB::val("SELECT COALESCE(MAX(week_no)+1,1) FROM student_week_state WHERE student_id=? AND subject_id=? AND status='passed'",[$student,$subject]);
+            return array_merge($row,['student_id'=>$student,'subject_id'=>$subject,'batch_id'=>DB::val('SELECT batch_id FROM users WHERE id=?',[$student]),'status'=>($row['status']??'')==='completed'?'completed':'active','current_week_no'=>max($next,(int)($row['current_week_no']??1))]);
+        }
         $row=DB::one("SELECT ss.* FROM student_subjects ss JOIN subjects s ON s.id=ss.subject_id WHERE ss.student_id=? AND ss.subject_id=? AND ss.status IN ('active','completed') AND s.is_active=1".($lock?' FOR UPDATE':''),[$student,$subject]);
         return $lock&&$row&&$row['status']!=='active'?null:$row;
     }
     public static function languageId(): int { return (int)DB::val('SELECT id FROM languages WHERE code=?',[TranslationService::currentCode()]); }
     public static function courses(int $student,?array $onlyIds=null): array
     {
+        if(AssignmentAccessService::forStudent($student)){
+            $ids=AssignmentAccessService::studentSubjectIds($student);if($onlyIds!==null)$ids=array_values(array_intersect($ids,$onlyIds));if(!$ids)return [];
+            $rows=DB::all('SELECT s.* FROM subjects s WHERE s.id IN ('.DB::in($ids).') ORDER BY s.name,s.id',$ids);
+            $batch=DB::val('SELECT b.name FROM users u JOIN batches b ON b.id=u.batch_id WHERE u.id=?',[$student]);
+            foreach($rows as &$s){$enrol=self::enrolment($student,(int)$s['id']);$s['current_week_no']=$enrol['current_week_no'];$s['enrolment_status']=$enrol['status'];$s['batch_name']=$batch;$s['modules']=self::tree($student,(int)$s['id']);$s['percent']=count($s['modules'])?(int)round(array_sum(array_column($s['modules'],'percent'))/count($s['modules'])):0;$s['completed']=count(array_filter($s['modules'],fn($m)=>$m['passed']));}unset($s);return $rows;
+        }
         if($onlyIds===[]){return [];}$params=[$student];$filter='';if($onlyIds!==null){$filter=' AND s.id IN ('.DB::in($onlyIds).')';$params=array_merge($params,$onlyIds);}
         $rows=DB::all("SELECT s.*,ss.current_week_no,ss.status AS enrolment_status,b.name AS batch_name FROM student_subjects ss JOIN subjects s ON s.id=ss.subject_id LEFT JOIN batches b ON b.id=ss.batch_id WHERE ss.student_id=? AND ss.status IN ('active','completed') AND s.is_active=1".$filter.' ORDER BY s.name,s.id',$params);
         foreach($rows as &$s){$s['modules']=self::tree($student,(int)$s['id']);$s['percent']=count($s['modules'])?(int)round(array_sum(array_column($s['modules'],'percent'))/count($s['modules'])):0;$s['completed']=count(array_filter($s['modules'],fn($m)=>$m['passed']));}
@@ -22,8 +35,11 @@ final class StudentService
     public static function coursePage(int $student,string $search,string $filter,int $page): array
     {
         $params=[$student];$where="ss.student_id=? AND ss.status IN ('active','completed') AND s.is_active=1";
+        $join='JOIN student_subjects ss ON ss.subject_id=s.id';
+        if(AssignmentAccessService::forStudent($student)){$params=[];$where=AssignmentAccessService::subjectFilter('s.id',$student,$params);$join='LEFT JOIN student_subjects ss ON ss.subject_id=s.id AND ss.student_id='.(int)$student;}
+
         if($search!==''){$where.=' AND (s.name LIKE ? OR s.code LIKE ?)';$like='%'.addcslashes($search,'%_\\').'%';$params[]=$like;$params[]=$like;}
-        $sql="SELECT s.id,s.name,ss.status AS enrolment_status,COALESCE((SELECT AVG(COALESCE(mp.completion_percent,0)) FROM modules m LEFT JOIN student_week_state ws ON ws.student_id=ss.student_id AND ws.subject_id=m.subject_id AND ws.week_no=m.week_no LEFT JOIN module_progress mp ON mp.module_id=m.id AND mp.student_id=ss.student_id AND mp.cycle_no=COALESCE(ws.cycle_no,1) WHERE m.subject_id=s.id AND m.status='published' AND m.deleted_at IS NULL),0) AS progress FROM subjects s JOIN student_subjects ss ON ss.subject_id=s.id WHERE $where";
+        $sql="SELECT s.id,s.name,CASE WHEN ss.status='completed' THEN 'completed' ELSE 'active' END AS enrolment_status,COALESCE((SELECT AVG(COALESCE(mp.completion_percent,0)) FROM modules m LEFT JOIN student_week_state ws ON ws.student_id=COALESCE(ss.student_id,$student) AND ws.subject_id=m.subject_id AND ws.week_no=m.week_no LEFT JOIN module_progress mp ON mp.module_id=m.id AND mp.student_id=COALESCE(ss.student_id,$student) AND mp.cycle_no=COALESCE(ws.cycle_no,1) WHERE m.subject_id=s.id AND m.status='published' AND m.deleted_at IS NULL),0) AS progress FROM subjects s $join WHERE $where";
         if($filter==='complete'){$sql.=" HAVING enrolment_status='completed' OR progress>=100";}elseif($filter==='progress'){$sql.=" HAVING enrolment_status<>'completed' AND progress>0 AND progress<100";}
         $total=(int)DB::val('SELECT COUNT(*) FROM ('.$sql.') AS courses',$params);$pages=max(1,(int)ceil($total/12));$page=max(1,min($pages,$page));$offset=($page-1)*12;
         $ids=array_map('intval',array_column(DB::all($sql." ORDER BY name,id LIMIT 12 OFFSET $offset",$params),'id'));return ['courses'=>self::courses($student,$ids),'total'=>$total,'page'=>$page,'pages'=>$pages];

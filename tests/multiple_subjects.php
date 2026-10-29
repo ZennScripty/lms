@@ -8,7 +8,7 @@ $pdo=DB::pdo();$pdo->beginTransaction();$passed=0;
 function verifyMulti(bool $ok,string $label):void{global $passed;if(!$ok){throw new RuntimeException('FAIL '.$label);}echo 'PASS '.$label.PHP_EOL;$passed++;}
 function loginMulti(int $id):void{$_SESSION=['uid'=>$id,'last_activity'=>time()];foreach(['loaded'=>false,'user'=>null] as $key=>$value){(new ReflectionProperty(Auth::class,$key))->setValue(null,$value);}}
 try{
- $admin=(int)DB::val("SELECT u.id FROM users u JOIN roles r ON r.id=u.role_id WHERE r.code='admin' AND u.status='active' LIMIT 1");loginMulti($admin);
+ $admin=(int)DB::val("SELECT u.id FROM users u JOIN roles r ON r.id=u.role_id WHERE r.code='super_admin' AND u.status='active' AND u.deleted_at IS NULL LIMIT 1");loginMulti($admin);
  $teacher=M::save('users',null,['full_name'=>'QA Multi Teacher','username'=>'qa.multi.teacher','role_id'=>DB::val("SELECT id FROM roles WHERE code='teacher'"),'password'=>'QaTest@2026!','status'=>'active']);
  $student=M::save('users',null,['full_name'=>'QA Multi Student','username'=>'qa.multi.student','role_id'=>DB::val("SELECT id FROM roles WHERE code='student'"),'password'=>'QaTest@2026!','status'=>'active']);
  $subjects=[];for($i=1;$i<=3;$i++){$subjects[]=M::save('subjects',null,['code'=>'QA-MULTI-'.$i,'name'=>'QA Multi '.$i,'is_active'=>1]);}

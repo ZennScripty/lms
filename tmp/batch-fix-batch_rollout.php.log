@@ -1,0 +1,15 @@
+PASS global strict mode stays disabled
+PASS configured batch automatically supplies subject without individual grant
+PASS stale individual grant cannot bypass configured batch
+PASS Super published test visible and available to batch Student
+PASS Admin published test visible and available to batch Student
+PASS Teacher published test visible and available to batch Student
+PASS Super test visible to subject-assigned Teacher
+PASS Admin test visible to subject-assigned Teacher
+PASS Teacher test visible to subject-assigned Teacher
+PASS unmapped legacy Student access preserved
+PASS explicit batch change immediately follows configured subjects
+PASS removing last subject never falls back to legacy enrolments
+PASS inactive course retains managed-batch boundary
+PASS individual grants blocked for managed Student
+14 batch rollout checks passed; all fixtures rolled back.

@@ -55,7 +55,7 @@ final class AttendanceService
     public static function checkIn(?array $file=null,?string $token=null): array
     {
         $user=Auth::requireLogin();$uid=(int)$user['id'];$day=date('Y-m-d');$mode=self::mode($user);
-        if(!in_array($user['role_slug'],['student','subject_teacher','super_admin'],true)){throw new \DomainException('Attendance is not available for this role.');}
+        if(!in_array($user['role_slug'],['student','subject_teacher','super_admin','centre_admin'],true)){throw new \DomainException('Attendance is not available for this role.');}
         if($existing=self::today($uid)){return $existing;}
         $bytes=null;
         if($mode==='selfie'){
@@ -88,12 +88,13 @@ final class AttendanceService
     {
         $u=Auth::user();if(!$u)return false;
         if(Authorization::isSuperAdmin()||(int)$record['user_id']===(int)$u['id'])return true;
-        return Authorization::isTeacher()&&Authorization::can('attendance.view')&&$record['attendance_for']==='student'&&(bool)DB::val("SELECT ss.id FROM student_subjects ss JOIN teacher_subjects ts ON ts.subject_id=ss.subject_id WHERE ss.student_id=? AND ts.teacher_id=? AND ss.status='active' LIMIT 1",[$record['user_id'],$u['id']]);
+        if(Authorization::isCentreAdmin()){return Authorization::can('attendance.view')&&Authorization::canManageUser((int)$record['user_id']);}
+        return Authorization::isTeacher()&&Authorization::can('attendance.view')&&$record['attendance_for']==='student'&&Authorization::canAccessStudent((int)$record['user_id']);
     }
     public static function checkOut(): array
     {
         $user=Auth::requireLogin();$uid=(int)$user['id'];$day=date('Y-m-d');
-        if(!in_array($user['role_slug'],['student','subject_teacher','super_admin'],true)){throw new \DomainException('Attendance is not available for this role.');}
+        if(!in_array($user['role_slug'],['student','subject_teacher','super_admin','centre_admin'],true)){throw new \DomainException('Attendance is not available for this role.');}
         return DB::transaction(function()use($uid,$day){
             DB::one('SELECT id FROM users WHERE id=? FOR UPDATE',[$uid]);
             $row=DB::one('SELECT * FROM attendance_records WHERE user_id=? AND attendance_date=? FOR UPDATE',[$uid,$day]);

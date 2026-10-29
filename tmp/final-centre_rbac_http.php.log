@@ -1,0 +1,55 @@
+PASS pending account cannot log in directly
+PASS root login
+PASS Super Admin centre assignment UI
+PASS Super Admin users.php
+PASS Super Admin centres.php
+PASS Super Admin batches.php
+PASS Super Admin subjects.php?view=centre_subjects&new=1
+PASS Super Admin dashboard.php
+PASS Super Admin reports.php?centre_id=113
+PASS consolidated export includes both centres
+PASS adminA login
+PASS centre Admin healthy dashboard.php
+PASS centre Admin healthy centres.php
+PASS centre Admin healthy batches.php
+PASS centre Admin healthy users.php
+PASS centre Admin healthy users.php?new=1
+PASS centre Admin healthy subjects.php
+PASS centre Admin healthy subjects.php?view=assignments
+PASS centre Admin healthy enrolments.php
+PASS centre Admin healthy modules.php
+PASS centre Admin healthy modules.php?view=media
+PASS centre Admin healthy tests.php
+PASS centre Admin healthy attendance.php
+PASS centre Admin healthy reports.php
+PASS cross-centre people excluded users.php
+PASS cross-centre people excluded dashboard.php
+PASS cross-centre people excluded reports.php
+PASS cross-centre people excluded reports.php?export=csv
+PASS catalogue only permitted centre subjects
+PASS direct foreign lookup denied users.php?edit=437
+PASS direct foreign lookup denied batches.php?edit=112
+PASS direct foreign lookup denied modules.php?edit=84
+PASS direct forbidden student_detail.php?id=437
+PASS direct forbidden reports.php?centre_id=113
+PASS direct forbidden roles_permissions.php
+PASS direct forbidden app_settings.php
+PASS direct forbidden language_settings.php
+PASS direct forbidden media.php?id=56
+PASS authorized centre media bytes
+PASS media library and upload centre scoped
+PASS forged deletion does not modify foreign account
+PASS crafted Super Admin creation denied
+PASS crafted cross-centre user creation denied
+PASS own-centre pending approval works
+PASS own-centre rejection is persisted
+PASS confirmed scoped soft deletion works
+PASS teacherA login
+PASS delegated Teacher cannot export foreign shared-subject student
+PASS delegated Teacher foreign detail denied
+PASS live session loses data on centre revocation
+PASS revocation blocks previously available centre file
+PASS changed centre assignment applies to existing session
+PASS Super Admin soft-deletes centre Admin
+PASS deleted Admin session cannot continue
+54 passed; HTTP fixtures cleaned.

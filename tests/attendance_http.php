@@ -54,7 +54,7 @@ function loginDaily(string $role): string
     return $cookie;
 }
 try {
-    foreach (['admin' => 'admin', 'teacher' => 'teacher', 'foreign' => 'teacher', 'student' => 'student'] as $tag => $role) {
+    foreach (['admin' => 'super_admin', 'teacher' => 'teacher', 'foreign' => 'teacher', 'student' => 'student'] as $tag => $role) {
         $users[$tag] = DB::insert("INSERT INTO users (uuid,role_id,full_name,username,password_hash,preferred_language_id) VALUES (?,(SELECT id FROM roles WHERE code=?),?,?,?,(SELECT id FROM languages WHERE code='en'))", [uuid_v4(), $role, 'QA Daily ' . $tag, 'qa.daily.' . $tag, password_hash('QaTest@2026!', PASSWORD_DEFAULT)]);
     }
     for ($i = 1; $i <= 3; $i++) $subjects[] = DB::insert('INSERT INTO subjects (code,name) VALUES (?,?)', ['QA-DAILY-' . $i, 'QA Daily Subject ' . $i]);
@@ -63,13 +63,17 @@ try {
     $adminToken = dailyToken($html);
     [$c] = dailyRequest('app_settings.php', ['action' => 'attendance_settings', 'attendance_student_mode' => 'selfie', 'attendance_staff_mode' => 'simple', 'csrf_token' => $adminToken]);
     assertDaily($c === 303, 'admin saves independent attendance modes');
-    foreach (['assignments' => ['teacher_id' => $users['teacher'], 'can_manage_content' => 1, 'can_manage_tests' => 1], 'enrolments' => ['student_id' => $users['student'], 'status' => 'active']] as $view => $fields) {
+    foreach (['assignments' => ['teacher_id' => $users['teacher'], 'can_manage_content' => 1, 'can_manage_tests' => 1]] as $view => $fields) {
         $route = $view === 'assignments' ? 'subjects.php?view=assignments' : 'enrolments.php';
         [$c, $html] = dailyRequest($route);
         assertDaily(str_contains($html, 'Assign multiple subjects'), 'bulk subjects UI ' . $view);
         [$c] = dailyRequest($route, $fields + ['action' => 'assign_subjects', 'subject_ids' => array_slice($subjects, 0, 2), 'csrf_token' => dailyToken($html)]);
         assertDaily($c === 303, 'bulk subjects saved over HTTP ' . $view);
     }
+    [$c,$html]=dailyRequest('enrolments.php');assertDaily(str_contains($html,'Assign batch')&&!str_contains($html,'name="subject_ids[]"'),'Student management uses batch assignment');
+    [$c]=dailyRequest('enrolments.php',['action'=>'assign_subjects','student_id'=>$users['student'],'subject_ids'=>array_slice($subjects,0,2),'csrf_token'=>dailyToken($html)]);assertDaily($c===403,'individual Student assignment disabled over HTTP');
+    // Legacy unmapped attendance fixtures retain their historical enrolments.
+    foreach(array_slice($subjects,0,2) as $sid)DB::run('INSERT INTO student_subjects(student_id,subject_id,enrolled_by) VALUES (?,?,?)',[$users['student'],$sid,$users['admin']]);
     $studentCookie = loginDaily('student');
     [$c, $html] = dailyRequest('courses.php');
     assertDaily($c === 200 && str_contains($html, 'QA Daily Subject 1') && str_contains($html, 'QA Daily Subject 2') && !str_contains($html, 'QA Daily Subject 3'), 'student sees both subjects and no foreign course');

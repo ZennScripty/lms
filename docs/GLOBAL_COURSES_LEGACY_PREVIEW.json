@@ -1,0 +1,129 @@
+{
+    "mode": "read-only preview",
+    "automatic_backfill": false,
+    "active_students_without_batch": 27,
+    "unique_batch_candidates": 23,
+    "union_access_widening_pairs": 96,
+    "student_batch_candidates_review_required": [
+        {
+            "student_id": 7,
+            "batch_id": 1,
+            "centre_id": 1
+        },
+        {
+            "student_id": 8,
+            "batch_id": 2,
+            "centre_id": 2
+        },
+        {
+            "student_id": 9,
+            "batch_id": 3,
+            "centre_id": 3
+        },
+        {
+            "student_id": 10,
+            "batch_id": 1,
+            "centre_id": 1
+        },
+        {
+            "student_id": 11,
+            "batch_id": 2,
+            "centre_id": 2
+        },
+        {
+            "student_id": 12,
+            "batch_id": 3,
+            "centre_id": 3
+        },
+        {
+            "student_id": 13,
+            "batch_id": 1,
+            "centre_id": 1
+        },
+        {
+            "student_id": 14,
+            "batch_id": 2,
+            "centre_id": 2
+        },
+        {
+            "student_id": 15,
+            "batch_id": 3,
+            "centre_id": 3
+        },
+        {
+            "student_id": 16,
+            "batch_id": 1,
+            "centre_id": 1
+        },
+        {
+            "student_id": 17,
+            "batch_id": 2,
+            "centre_id": 2
+        },
+        {
+            "student_id": 18,
+            "batch_id": 3,
+            "centre_id": 3
+        },
+        {
+            "student_id": 19,
+            "batch_id": 1,
+            "centre_id": 1
+        },
+        {
+            "student_id": 20,
+            "batch_id": 2,
+            "centre_id": 2
+        },
+        {
+            "student_id": 21,
+            "batch_id": 3,
+            "centre_id": 3
+        },
+        {
+            "student_id": 22,
+            "batch_id": 1,
+            "centre_id": 1
+        },
+        {
+            "student_id": 23,
+            "batch_id": 2,
+            "centre_id": 2
+        },
+        {
+            "student_id": 24,
+            "batch_id": 3,
+            "centre_id": 3
+        },
+        {
+            "student_id": 25,
+            "batch_id": 1,
+            "centre_id": 1
+        },
+        {
+            "student_id": 26,
+            "batch_id": 2,
+            "centre_id": 2
+        },
+        {
+            "student_id": 27,
+            "batch_id": 3,
+            "centre_id": 3
+        },
+        {
+            "student_id": 28,
+            "batch_id": 1,
+            "centre_id": 1
+        },
+        {
+            "student_id": 29,
+            "batch_id": 2,
+            "centre_id": 2
+        },
+        {
+            "student_id": 30,
+            "batch_id": 3,
+            "centre_id": 3
+        }
+    ]
+}

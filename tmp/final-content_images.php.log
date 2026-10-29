@@ -1,0 +1,11 @@
+PASS image resized with preserved aspect ratio
+PASS validated raster converted to WebP
+PASS extension must match decoded MIME
+PASS executable extension denied
+PASS SVG upload denied
+PASS SVG content cannot masquerade as raster
+PASS oversized file denied
+PASS undersized dimensions denied
+PASS empty image denied
+PASS placeholder and alternative text safely escaped
+10 image checks passed

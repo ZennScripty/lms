@@ -1,0 +1,12 @@
+PASS preview explicitly requires mapping review
+PASS preview preserves legacy table checksums
+PASS migration preserves all 20 legacy table counts and checksums
+PASS repeat migration preserves new and historical data
+PASS schema marker recorded
+PASS course_subjects foreign keys including composite relationships
+PASS centre_courses foreign keys including composite relationships
+PASS batch_courses foreign keys including composite relationships
+PASS batch_subjects foreign keys including composite relationships
+PASS teacher_batch_subjects foreign keys including composite relationships
+PASS new relationships never cascade deletion
+11 passed; additive migration verified. No legacy assignment backfill executed.

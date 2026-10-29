@@ -25,8 +25,8 @@ final class Auth
             return null;
         }
         $user = Database::one(
-            "SELECT u.id, u.full_name AS name, u.email, u.username, u.role_id, u.centre_id, NULL AS batch_id, u.status, l.code AS preferred_language,
-                    CASE r.code WHEN 'admin' THEN 'super_admin' WHEN 'teacher' THEN 'subject_teacher' ELSE r.code END AS role_slug, r.name AS role_name
+            "SELECT u.id, u.full_name AS name, u.email, u.username, u.role_id, u.centre_id, u.batch_id, u.profile_asset_id, u.status, l.code AS preferred_language,
+                    CASE r.code WHEN 'admin' THEN 'centre_admin' WHEN 'teacher' THEN 'subject_teacher' ELSE r.code END AS role_slug, r.code AS role_code, r.name AS role_name
              FROM users u JOIN roles r ON r.id = u.role_id LEFT JOIN languages l ON l.id = u.preferred_language_id WHERE u.id = ? AND u.deleted_at IS NULL",
             [(int) $id]
         );

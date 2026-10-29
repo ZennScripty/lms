@@ -1,0 +1,151 @@
+{
+    "strict_access_enabled": false,
+    "missing_batch": 27,
+    "effective_batch_subject_pairs": 0,
+    "legacy_pairs_losing_access": 25,
+    "new_pairs_gaining_access": 0,
+    "student_memberships": [
+        {
+            "student_id": 7,
+            "centre_id": 1,
+            "batch_id": null
+        },
+        {
+            "student_id": 8,
+            "centre_id": 2,
+            "batch_id": null
+        },
+        {
+            "student_id": 9,
+            "centre_id": 3,
+            "batch_id": null
+        },
+        {
+            "student_id": 10,
+            "centre_id": 1,
+            "batch_id": null
+        },
+        {
+            "student_id": 11,
+            "centre_id": 2,
+            "batch_id": null
+        },
+        {
+            "student_id": 12,
+            "centre_id": 3,
+            "batch_id": null
+        },
+        {
+            "student_id": 13,
+            "centre_id": 1,
+            "batch_id": null
+        },
+        {
+            "student_id": 14,
+            "centre_id": 2,
+            "batch_id": null
+        },
+        {
+            "student_id": 15,
+            "centre_id": 3,
+            "batch_id": null
+        },
+        {
+            "student_id": 16,
+            "centre_id": 1,
+            "batch_id": null
+        },
+        {
+            "student_id": 17,
+            "centre_id": 2,
+            "batch_id": null
+        },
+        {
+            "student_id": 18,
+            "centre_id": 3,
+            "batch_id": null
+        },
+        {
+            "student_id": 19,
+            "centre_id": 1,
+            "batch_id": null
+        },
+        {
+            "student_id": 20,
+            "centre_id": 2,
+            "batch_id": null
+        },
+        {
+            "student_id": 21,
+            "centre_id": 3,
+            "batch_id": null
+        },
+        {
+            "student_id": 22,
+            "centre_id": 1,
+            "batch_id": null
+        },
+        {
+            "student_id": 23,
+            "centre_id": 2,
+            "batch_id": null
+        },
+        {
+            "student_id": 24,
+            "centre_id": 3,
+            "batch_id": null
+        },
+        {
+            "student_id": 25,
+            "centre_id": 1,
+            "batch_id": null
+        },
+        {
+            "student_id": 26,
+            "centre_id": 2,
+            "batch_id": null
+        },
+        {
+            "student_id": 27,
+            "centre_id": 3,
+            "batch_id": null
+        },
+        {
+            "student_id": 28,
+            "centre_id": 1,
+            "batch_id": null
+        },
+        {
+            "student_id": 29,
+            "centre_id": 2,
+            "batch_id": null
+        },
+        {
+            "student_id": 30,
+            "centre_id": 3,
+            "batch_id": null
+        },
+        {
+            "student_id": 37,
+            "centre_id": 7,
+            "batch_id": null
+        },
+        {
+            "student_id": 152,
+            "centre_id": 24,
+            "batch_id": null
+        },
+        {
+            "student_id": 153,
+            "centre_id": 25,
+            "batch_id": null
+        },
+        {
+            "student_id": 260,
+            "centre_id": 3,
+            "batch_id": 3
+        }
+    ],
+    "batch_subject_assignments": [],
+    "review_hash": "bf1d5fea9ad20b704c1fc2e3460b0b524941ccc8bc77971196a336b418a245b8"
+}

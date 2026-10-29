@@ -1,0 +1,27 @@
+PASS batch options bound to centre
+PASS public Teacher options disabled
+PASS Student cannot smuggle Teacher subject assignment
+PASS cross-centre batch rejected
+PASS public privileged role rejected
+PASS password mismatch rejected
+PASS existing minimum password enforced
+PASS registration stays pending with selected centre and batch
+PASS password hashed and public username spoof ignored
+PASS posted role ID cannot override account type
+PASS correct centre Admin receives registration notification
+PASS duplicate email rejected without duplicate account
+PASS pending account cannot obtain session access
+PASS approval rechecks inactive batch
+PASS approval preserves selected batch
+PASS approved session exposes canonical batch membership
+PASS foreign curriculum rejected
+PASS malformed subject IDs rejected
+PASS public Teacher signup disabled
+PASS multiple Teacher subjects saved without duplicate links
+PASS signup cannot grant management permissions
+PASS Teacher approval revalidates subjects
+PASS valid Teacher approval activates existing account
+PASS inactive centres unavailable
+PASS profile image safely decoded and bounded with aspect ratio
+PASS executable or fake image rejected
+26 passed; registration fixtures rolled back.

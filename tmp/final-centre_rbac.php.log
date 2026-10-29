@@ -1,0 +1,35 @@
+PASS distinct centre Admin identity
+PASS Admin only assigned active centres
+PASS centre Admin cannot inherit global role/settings privileges
+PASS scoped dropdown students
+PASS scoped dropdown teachers
+PASS scoped dropdown centres
+PASS scoped dropdown batches
+PASS scoped dropdown subjects
+PASS user lookup isolates centres
+PASS centre Admin cannot target Super Admin
+PASS foreign curriculum lookup denied
+PASS foreign student detail authorization denied
+PASS shared curriculum readable without cross-centre writes
+PASS foreign user mutation rejected
+PASS Super Admin promotion rejected server side
+PASS foreign subject enrolment rejected
+PASS foreign batch rejected
+PASS centre Admin cannot grant shared global write powers
+PASS shared subject does not bypass Teacher centre isolation
+PASS Centre Admin cannot define global subjects
+PASS Super Admin can make global subject available to centre
+PASS scoped pending approval audited with actor/time
+PASS duplicate approval rejected
+PASS cross-centre account deletion denied
+PASS authorized deletion is soft and retains identity
+PASS foreign attendance evidence denied
+PASS revocation fails closed immediately
+PASS inactive centre denies Admin access
+PASS Super Admin can assign multiple centres
+PASS deactivated Admin loses authenticated access
+PASS Super Admin can reactivate Admin without losing centre links
+PASS self deletion blocked
+PASS Super Admin retains global access
+PASS last active Super Admin deletion blocked under transaction lock
+34 passed; all records and role changes rolled back.

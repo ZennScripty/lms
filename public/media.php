@@ -3,14 +3,20 @@ declare(strict_types=1);
 require_once __DIR__.'/../app/bootstrap.php';
 use App\Core\{Auth,Authorization,Database as DB,Validator as V};
 $u=Auth::requireLogin();$id=V::int($_GET['id']??'','Media',1);$asset=DB::one('SELECT * FROM media_assets WHERE id=?',[$id]);if(!$asset){not_found();}
-$allowed=Authorization::isSuperAdmin()||(int)$asset['uploaded_by']===(int)$u['id'];
+$coverAllowed=\App\Services\ContentImageService::canRead($id);
+$allowed=$coverAllowed||Authorization::isSuperAdmin()||(int)$asset['uploaded_by']===(int)$u['id'];
+if(Authorization::isCentreAdmin()){$p=[];$w=Authorization::mediaWhere('ma',$p);$p[]=$id;$allowed=$coverAllowed||(bool)DB::val("SELECT ma.id FROM media_assets ma WHERE $w AND ma.id=?",$p);if(!$allowed){forbidden();}}
 if(!$allowed){$query="SELECT COUNT(*) FROM content_item_translations t JOIN content_items c ON c.id=t.content_item_id JOIN modules m ON m.id=c.module_id WHERE t.media_asset_id=?";$p=[$id];
-    if(Authorization::isTeacher()){$query.=' AND c.subject_id IN (SELECT subject_id FROM teacher_subjects WHERE teacher_id=?)';$p[]=$u['id'];}
+    if(Authorization::isTeacher()){$ids=Authorization::visibleSubjectIds();$query.=$ids?' AND c.subject_id IN ('.DB::in($ids).')':' AND 1=0';$p=array_merge($p,$ids??[]);}
     else{$query.=" AND c.status='published' AND m.status='published' AND c.subject_id IN (SELECT subject_id FROM student_subjects WHERE student_id=? AND status='active' AND current_week_no>=m.week_no)";$p[]=$u['id'];}
     $allowed=(int)DB::val($query,$p)>0;
 }
+if(Authorization::isTeacher()){
+    $linked=(bool)DB::val('SELECT content_item_id FROM content_item_translations WHERE media_asset_id=? LIMIT 1',[$id]);
+    if($linked){$ids=Authorization::visibleSubjectIds();$allowed=$ids&&(bool)DB::val('SELECT c.id FROM content_items c JOIN content_item_translations t ON t.content_item_id=c.id WHERE t.media_asset_id=? AND c.subject_id IN ('.DB::in($ids).') LIMIT 1',array_merge([$id],$ids));}
+}
 if(Authorization::isStudent()){
-    $allowed=false;
+    $allowed=$coverAllowed||(int)DB::val('SELECT profile_asset_id FROM users WHERE id=?',[$u['id']])===$id;
     foreach(DB::all('SELECT content_item_id FROM content_item_translations WHERE media_asset_id=?',[$id]) as $linked){
         $lesson=\App\Services\StudentService::lesson((int)$u['id'],(int)$linked['content_item_id']);
         if($lesson&&$lesson['unlocked']){$allowed=true;break;}

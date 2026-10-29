@@ -11,6 +11,7 @@ final class LearningService
 {
     public static function subjectsOf(int $studentId): array
     {
+        if(AssignmentAccessService::forStudent($studentId))return StudentService::courses($studentId);
         return Database::all(
             "SELECT s.* FROM subjects s JOIN student_subjects ss ON ss.subject_id = s.id WHERE ss.student_id = ? AND s.status = 'published' ORDER BY s.name",
             [$studentId]
@@ -22,6 +23,7 @@ final class LearningService
      */
     public static function tree(int $studentId, int $subjectId, ?string $lang = null): array
     {
+        if(AssignmentAccessService::forStudent($studentId))return StudentService::tree($studentId,$subjectId);
         if (Database::val('SELECT COUNT(*) FROM student_subjects WHERE student_id = ? AND subject_id = ?', [$studentId, $subjectId]) < 1) {
             return [];
         }

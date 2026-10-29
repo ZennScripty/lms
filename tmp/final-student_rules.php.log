@@ -1,0 +1,25 @@
+PASS sequential module and week locks
+PASS locked lesson cannot be completed
+PASS module test requires completed lessons
+PASS online study time capped by server clock
+PASS lesson completes after required time
+PASS duplicate sync cannot double count study
+PASS module test pass is required to open next module
+PASS start retries resume a single pending attempt
+PASS taking payload contains no answer key
+PASS wrong answers fail on server
+PASS resubmission does not change grade or duplicate answers
+PASS exactly 50 percent passes the gte rule
+PASS passing module test unlocks next module
+PASS failed weekly test starts a fresh study cycle
+PASS stale-cycle offline activity rejected
+PASS weekly pass opens next week on server
+PASS expired timed attempt cannot pass
+PASS maximum attempts enforced
+PASS completed course remains in completed catalogue
+PASS completed course can be reviewed
+PASS completed enrolment cannot create attempts
+PASS completed enrolment is read only
+PASS withdrawn enrolment disappears
+PASS withdrawn student cannot start test
+24 passed; all student fixtures rolled back.

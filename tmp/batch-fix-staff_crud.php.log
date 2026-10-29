@@ -1,0 +1,18 @@
+PASS create centre
+PASS create batch
+PASS teacher password hashed
+PASS create subject
+PASS teacher subject permissions saved
+PASS enrolment opens first week
+PASS module bilingual translations
+PASS lesson inherits module subject
+PASS question with four options
+PASS exactly one correct option
+PASS test total derived from questions
+PASS empty published test rejected
+PASS attendance saved
+PASS duplicate attendance rejected
+PASS attendance correction
+PASS update module translations
+PASS mutations audited
+17 passed; all test records rolled back.

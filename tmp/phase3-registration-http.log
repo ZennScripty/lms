@@ -1,0 +1,42 @@
+PASS registration discoverable from sign in
+PASS public form has photo and CSRF without username input
+PASS Student JSON options filter batches by centre
+PASS Teacher JSON options filter curriculum by centre
+PASS public options rejects privileged role
+PASS registration rejects missing CSRF
+PASS forged cross-centre batch creates no account
+PASS public cannot request Admin role
+PASS confirmation mismatch rejected
+PASS fake image upload cannot create account
+PASS Student signup persists pending account and selected batch
+PASS signup stores hashed password and ignores username/status spoofing
+PASS optional photo stored privately as validated canonical image
+PASS registration returns a pending-approval confirmation
+PASS signup does not create authenticated access
+PASS double submission cannot duplicate account
+PASS notifications reach correct centre Admin and exclude foreign Admin
+PASS pending cannot sign in
+PASS pending user cannot read protected profile media
+PASS adminA can sign in
+PASS Admin notification links to scoped review
+PASS existing User page shows requested batch and photo
+PASS stale batch cannot pass approval
+PASS approval activates without losing batch
+PASS approved can sign in
+PASS approved Student reaches existing LMS
+PASS approved Student may read own profile photo
+PASS adminB can sign in
+PASS foreign Admin cannot review applicant
+PASS foreign Admin cannot fetch applicant photo
+PASS Teacher cannot forge foreign subject
+PASS Teacher registers with multiple requested subjects
+PASS public Teacher receives no management grants
+PASS Admin can inspect requested Teacher subjects
+PASS Teacher approval succeeds
+PASS teacher can sign in
+PASS approved Teacher gets only requested subject scope
+PASS Admin may reject self-registration
+PASS rejected cannot sign in
+PASS authorized deletion retains registration identity
+PASS deleted applicant cannot bypass review by re-registering same email
+41 passed; registration HTTP fixtures cleaned.

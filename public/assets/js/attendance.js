@@ -2,6 +2,12 @@
 (function(){
  var card=document.querySelector('[data-daily-attendance]');if(!card)return;
  var busy=false,refreshing=false,cameraActive=false,verified=false,stopCamera=function(){};
+ async function readResponse(response){
+  if(response.status===401||response.status===419)throw new Error(card.dataset.stale);
+  if(!(response.headers.get('Content-Type')||'').includes('application/json'))throw new Error(card.dataset.error);
+  var result;try{result=await response.json();}catch(e){throw new Error(card.dataset.error);}
+  if(!response.ok||!result.ok)throw new Error(result.error||card.dataset.error);return result;
+ }
  function feedback(text,error){var area=card.querySelector('[data-attendance-feedback]');area.textContent=text||'';area.classList.toggle('is-error',!!error);area.setAttribute('role',error?'alert':'status');}
  function controls(disabled){card.querySelectorAll('button').forEach(function(button){
   if(disabled){if(!button.hasAttribute('data-was-disabled'))button.dataset.wasDisabled=button.disabled?'1':'0';button.disabled=true;}
@@ -19,8 +25,7 @@
   if(!navigator.onLine){verified=false;controls(true);feedback(card.dataset.offline,true);retry(true);card.querySelector('[data-attendance-refresh]').disabled=false;return;}
   refreshing=true;
   try{
-   var response=await fetch(card.dataset.endpoint+'?action=status',{credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}}),result=await response.json();
-   if(!response.ok||!result.ok)throw new Error(result.error||card.dataset.error);
+   var response=await fetch(card.dataset.endpoint+'?action=status',{credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}}),result=await readResponse(response);
    if(String(result.attendance.user_id)!==card.dataset.userId){verified=false;controls(true);feedback(card.dataset.stale,true);retry(false);return;}
    if(force||!verified||result.attendance.revision!==card.dataset.revision){install(result,null,false);}
    else{var duration=card.querySelector('[data-attendance-duration]');if(duration&&result.attendance.check_in_time)duration.textContent=result.attendance.duration;}
@@ -55,15 +60,14 @@
    e.preventDefault();if(busy||refreshing)return;if(!verified||!navigator.onLine){feedback(card.dataset.offline,true);fetchStatus(true);return;}if(form===camera&&!blob)return;
    busy=true;controls(true);card.setAttribute('aria-busy','true');feedback(card.dataset.loading,false);var data=new FormData(form);if(form===camera)data.set('selfie',blob,'selfie.jpg');
    try{
-    var response=await fetch(form.action,{method:'POST',body:data,credentials:'same-origin',headers:{Accept:'application/json'}}),result=await response.json();
-    if(!response.ok||!result.ok)throw new Error(result.error||card.dataset.error);
-    install(result,result.message,true);
+    var response=await fetch(form.getAttribute('action'),{method:'POST',body:data,credentials:'same-origin',headers:{Accept:'application/json'}}),result=await readResponse(response);
+    install(result,result.message,true);if(result.message)document.dispatchEvent(new CustomEvent('tlmti:success',{detail:{message:result.message}}));
    }catch(e){feedback(e.message||card.dataset.error,true);controls(false);retry(true);}
    finally{busy=false;card.removeAttribute('aria-busy');}
   });});
  }
  bind();controls(true);fetchStatus(true);
- window.addEventListener('online',function(){fetchStatus(true);});window.addEventListener('offline',function(){verified=false;controls(true);feedback(card.dataset.offline,true);retry(true);card.querySelector('[data-attendance-refresh]').disabled=false;});
+ window.addEventListener('online',function(){fetchStatus(true);});window.addEventListener('offline',function(){stopCamera();cameraActive=false;verified=false;controls(true);feedback(card.dataset.offline,true);retry(true);card.querySelector('[data-attendance-refresh]').disabled=false;});
  window.addEventListener('focus',function(){fetchStatus(false);});
  document.addEventListener('visibilitychange',function(){if(!document.hidden)fetchStatus(false);});
  window.addEventListener('pagehide',function(){stopCamera();cameraActive=false;});

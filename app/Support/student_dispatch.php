@@ -3,6 +3,8 @@ declare(strict_types=1);
 use App\Core\{Auth,Authorization,Csrf,Validator};
 use App\Services\{StudentService as S,SyncService};
 if(Authorization::isStudent()){
+    $accessService=\App\Services\AssignmentAccessService::class;
+    header('X-TLMTI-Access: '.hash('sha256',json_encode([$accessService::forStudent((int)Auth::user()['id']),Auth::user()['batch_id'],$accessService::forStudent((int)Auth::user()['id'])?$accessService::studentSubjectIds((int)Auth::user()['id']):[]])));
     if(current_page()==='attendance.php'){header('X-TLMTI-Cache: no');}
     Authorization::require('learn.access');$student=(int)Auth::user()['id'];$page=current_page();
     $views=['dashboard.php'=>'dashboard','courses.php'=>'courses','subjects.php'=>'courses','modules.php'=>'courses','lesson.php'=>'lesson','tests.php'=>'tests','progress.php'=>'progress','student_detail.php'=>'progress','attendance.php'=>'attendance','offline_downloads.php'=>'downloads','sync_status.php'=>'sync'];

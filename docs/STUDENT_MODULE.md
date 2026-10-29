@@ -9,7 +9,7 @@ The student web module uses the supplied database and the existing authenticatio
 - Learning: text, image, authenticated PDF, audio/video player, saved media position, browser TTS, active study timer, periodic saves and explicit lesson completion. The server caps online study seconds by its own session clock. Seeking a video does not earn skipped watch time.
 - Tests: published module/weekly/practice tests, server-created/resumable attempts, one-question navigation, local answer drafts, countdown, submission, server grading and result view. The browser never receives correct-answer flags.
 - My Progress: current-cycle module progress and paginated attempt history, with links to the student's own results.
-- My Attendance: paginated daily history and self check-in using Admin's selected simple/selfie policy. Students cannot edit history or mark another person. See [daily check-in and multiple subjects](MULTIPLE_SUBJECTS_ATTENDANCE.md).
+- My Attendance: paginated daily history; dashboard and attendance page both provide self In/Out using Admin's selected simple/selfie policy. Students cannot edit history or mark another person. See [dashboard attendance](DASHBOARD_ATTENDANCE_UX.md) and [multiple subjects](MULTIPLE_SUBJECTS_ATTENDANCE.md).
 - Downloads: explicitly download available, downloadable lesson pages and attached media; view pending sync state; remove private downloads.
 - Profile/password and notifications use the shared account pages.
 

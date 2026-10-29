@@ -1,0 +1,33 @@
+PASS student login
+PASS dashboard.php
+PASS courses.php
+PASS courses.php?q=COPA
+PASS courses.php?filter=progress
+PASS courses.php?id=1
+PASS lesson.php?id=1
+PASS tests.php
+PASS progress.php
+PASS student_detail.php
+PASS attendance.php
+PASS offline_downloads.php
+PASS sync_status.php
+PASS notifications.php
+PASS profile.php
+PASS student access denied courses.php?id=2
+PASS student access denied lesson.php?id=4
+PASS student access denied tests.php?id=4
+PASS student access denied tests.php?result=1
+PASS student access denied student_detail.php?id=1
+PASS student access denied users.php
+PASS student access denied centres.php
+PASS student access denied app_settings.php
+PASS student access denied roles_permissions.php
+PASS course list is enrolment scoped
+PASS lesson HTML contains no answer key
+PASS study requires CSRF
+PASS student cannot mark own attendance
+PASS Hindi courses and only two languages
+PASS Hindi lesson titles
+PASS English preference saved
+PASS offline sync rechecks subject access
+32 passed, 0 failed

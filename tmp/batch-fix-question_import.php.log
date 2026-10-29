@@ -1,0 +1,17 @@
+PASS actual sample XLSX reads English/Hindi and answer keys
+PASS two questions imported to selected subject/module
+PASS four answer options stored for each imported question
+PASS re-import skips duplicates without overwriting
+PASS invalid row rejects entire import
+PASS earlier rows rolled back atomically
+PASS cross-subject module denied
+PASS question limit enforced
+PASS UTF-8 CSV supported
+PASS unexpected headers rejected
+PASS oversized spreadsheet rejected
+PASS Excel formulas rejected
+PASS server generates editable default test title from subject/module
+PASS custom edited test title retained
+PASS Teacher cannot import into foreign subject
+PASS Teacher with explicit tests grant can import owned subject
+16 question import checks passed; fixtures rolled back.

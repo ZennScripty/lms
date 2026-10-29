@@ -1,0 +1,51 @@
+PASS admin HTTP login
+PASS admin saves independent attendance modes
+PASS bulk subjects UI assignments
+PASS bulk subjects saved over HTTP assignments
+PASS bulk subjects UI enrolments
+PASS bulk subjects saved over HTTP enrolments
+PASS student HTTP login
+PASS student sees both subjects and no foreign course
+PASS student dashboard contains inline selfie In card
+PASS large dashboard title removed with accessible heading retained
+PASS status endpoint ignores foreign user id and does not check in
+PASS student cannot check out before In
+PASS selfie page opens without automatic attendance
+PASS check-in rejects missing CSRF
+PASS selfie policy rejects missing image
+PASS fake image upload rejected
+PASS selfie upload records server date and present
+PASS In response returns updated Out card without navigation
+PASS private canonical selfie saved with checksum
+PASS selfie retry returns same daily record
+PASS student may view own selfie
+PASS student cannot change attendance policy (HTTP 403)
+PASS teacher HTTP login
+PASS teacher sees both assigned subjects only
+PASS staff dashboard starts not checked in with compact layout
+PASS staff simple In uses authenticated user and server timestamp
+PASS repeated staff In is an idempotent no-op
+PASS checkout requires CSRF
+PASS staff Out response completes card and removes action buttons
+PASS repeated Out preserves first server checkout
+PASS staff forged user id never checks out student
+PASS assigned teacher may review student selfie
+PASS teacher manages assigned student attendance
+PASS teacher correction preserves selfie and check-in time
+PASS foreign HTTP login
+PASS unassigned teacher selfie access denied
+PASS unassigned teacher attendance edit denied
+PASS admin may review attendance evidence
+PASS invalid policy rejected without partial save
+PASS student sees corrected daily status
+PASS admin enables staff selfie independently
+PASS staff selfie mode requires capture without auto present
+PASS staff selfie checks in authenticated teacher and ignores posted user
+PASS teacher can view own staff selfie
+PASS teacher cannot change Admin attendance settings
+PASS student cannot view staff selfie
+PASS student Out returns both timestamps and working duration
+PASS student cannot check out another staff account
+PASS completed student dashboard has no In or Out action
+PASS unauthenticated attendance status rejected
+50 passed; HTTP fixtures cleaned up.

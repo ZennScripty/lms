@@ -1,0 +1,11 @@
+PASS teacher receives two subjects in one operation
+PASS existing teacher assignments preserved on retry
+PASS existing subject permissions not overwritten
+PASS student receives multiple subjects
+PASS week one initialized independently for every subject
+PASS bulk retry preserves student progress
+PASS student catalogue contains all enrolled subjects
+PASS teacher scope includes all assigned subjects
+PASS multi-subject student appears once in teacher options
+PASS invalid bulk selection rolls back all additions
+10 passed; all fixtures rolled back.

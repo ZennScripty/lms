@@ -1,6 +1,6 @@
 # Multiple subjects aur daily attendance
 
-27 October 2026 update. PWA/PHP application mein yeh features add hue hain. Redis activation aur R2 is change ka hissa nahi hain. Pehle diya gaya Word working guide is update se pehle ka snapshot hai; attendance ke current behavior ke liye yeh note use karein.
+27 October 2026 update. PWA/PHP application mein yeh features add hue hain. Redis activation aur R2 is change ka hissa nahi hain. Pehle diya gaya Word working guide is update se pehle ka snapshot hai. Latest attendance flow ke liye [Dashboard Attendance UX](DASHBOARD_ATTENDANCE_UX.md) dekhein: dashboard par explicit In/Out hai; page open ab attendance mark nahi karta.
 
 ## Student aur Teacher ko multiple subjects
 
@@ -12,10 +12,10 @@
 
 ## Admin attendance settings
 
-Admin → **Settings → Attendance settings** mein Student attendance aur Staff attendance ke liye alag dropdown hai. Staff mein Teachers aur Admins hain. Dono default **Simple login or open today** hain.
+Admin → **Settings → Attendance settings** mein Student attendance aur Staff attendance ke liye alag dropdown hai. Staff mein Teachers aur Admins hain. Default mode **Simple attendance** hai; Admin ki current saved preference apply hoti hai.
 
-1. **Simple login or open today**: authenticated user pehli baar din mein online page kholta hai to server present attendance aur check-in time save karta hai. Login ke baad dashboard open bhi ismein aata hai. Same day refresh/relogin duplicate nahi banata. Agle din page open karne par nayi daily row banti hai.
-2. **Attendance with selfie**: page open par attendance automatic nahi banti. Pending banner/Today attendance se Attendance page kholein → Start camera → Capture selfie → Submit selfie and check in. Valid upload ke baad present aur server check-in time save hote hain.
+1. **Simple attendance**: dashboard par Attendance In button se server present attendance aur check-in time save karta hai. Phir Attendance Out dikhta hai. Out ke baad timings aur total duration ke saath completed status aata hai. Refresh/relogin duplicate nahi banata.
+2. **Attendance with selfie**: dashboard par Attendance In → camera → Capture selfie → Submit selfie and check in. Valid upload ke baad present aur server check-in time save hote hain; Out bhi isi dashboard par hota hai.
 
 Selfie camera ke liye browser permission aur localhost/HTTPS access chahiye. Physical mobile camera/permission flow ki device acceptance abhi user ke phone par karni hai. Automated upload tests synthetic camera-size image se hue hain; unhe physical camera test na maanein. Face recognition ya liveness verification implement nahi hai.
 

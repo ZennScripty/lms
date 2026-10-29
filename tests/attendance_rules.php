@@ -9,7 +9,7 @@ function asAttendance(int $id):array{$_SESSION=['uid'=>$id,'last_activity'=>time
 function rejectsAttendance(callable $fn,string $label):void{try{$fn();}catch(DomainException $e){checkAttendance(true,$label);return;}throw new RuntimeException('FAIL '.$label);}
 try{
  $make=function(string $role){return DB::insert("INSERT INTO users (uuid,role_id,full_name,username,password_hash) VALUES (?,(SELECT id FROM roles WHERE code=?),?,?,?)",[uuid_v4(),$role,'QA Attendance '.$role,'qa.attendance.'.$role,password_hash('QaTest@2026!',PASSWORD_DEFAULT)]);};
- $student=$make('student');$teacher=$make('teacher');$admin=$make('admin');
+ $student=$make('student');$teacher=$make('teacher');$admin=$make('super_admin');
  foreach(['attendance_student_mode','attendance_staff_mode'] as $k)DB::run("UPDATE app_settings SET setting_value='simple' WHERE setting_key=?",[$k]);
  $u=asAttendance($student);checkAttendance(A::status()['state']==='not_checked_in'&&A::today($student)===null,'opening status never marks attendance');rejectsAttendance(fn()=>A::checkOut(),'Out before In rejected');
  A::checkIn();$row=A::today($student);checkAttendance($row['status']==='present'&&$row['checkin_mode']==='simple'&&$row['check_in_time']!==null,'explicit simple In records present and server time');

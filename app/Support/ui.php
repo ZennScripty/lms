@@ -47,10 +47,10 @@ function app_navigation(): array
     if (\App\Core\Authorization::isSuperAdmin()) {
         return [
             ['dashboard.php','Dashboard','home'], ['centres.php','Centres','building'],
-            ['batches.php','Batches','users'], ['users.php','Users','users'],
-            ['subjects.php','Subjects','book'], ['enrolments.php','Enrolments','users'],
-            ['modules.php','Content','book'], ['tests.php','Tests','test'],
-            ['attendance.php','Attendance','check'], ['reports.php','Reports','chart'],
+            ['batches.php','Batches','users'], ['users.php','Users','users'],['registrations.php','Registration approvals','check'],
+            ['courses.php','Global courses','book'], ['subjects.php','Subjects','book'],['teacher_assignments.php','Teacher subject grants','users'], ['enrolments.php','Student batches','users'],['course_assignments.php','Course assignments','users'],
+            ['modules.php','Modules','book'],['lessons.php','Lessons','book'],['media_library.php','Media library','download'],['question_bank.php','Question bank','test'], ['tests.php','Tests','test'],
+            ['attendance.php','Attendance','check'], ['progress_analytics.php','Progress analytics','chart'], ['reports.php','Reports','chart'],
             ['roles_permissions.php','Roles & permissions','lock'], ['app_settings.php','Settings','settings'],
             ['sync_status.php','System logs','clock'],
         ];
@@ -58,7 +58,11 @@ function app_navigation(): array
     if (\App\Core\Authorization::isStudent()) {
         return [['dashboard.php','Dashboard','home'],['courses.php','My Courses','book'],['tests.php','Tests','test'],['offline_downloads.php','Downloads','download'],['progress.php','My Progress','chart'],['attendance.php','My Attendance','check'],['notifications.php','Notifications','bell'],['profile.php','Profile','user']];
     }
-    $nav = [['dashboard.php','Dashboard','home'],['subjects.php','My Subjects','book'],['modules.php','Content','book'],['students.php','Students','users'],['tests.php','Tests','test'],['attendance.php','Attendance','check'],['reports.php','Reports','chart'],['profile.php','Profile','user']];
+    if(\App\Core\Authorization::isCentreAdmin()){
+        $nav=[['dashboard.php','Dashboard','home'],['centres.php','Centres','building'],['batches.php','Batches','users'],['users.php','Users','users'],['registrations.php','Registration approvals','check'],['courses.php','Global courses','book'],['course_assignments.php','Course assignments','users'],['subjects.php','Subjects','book'],['teacher_assignments.php','Teacher subject grants','users'],['progress_analytics.php','Progress analytics','chart'],['enrolments.php','Student batches','users'],['modules.php','Modules','book'],['lessons.php','Lessons','book'],['media_library.php','Media library','download'],['question_bank.php','Question bank','test'],['tests.php','Tests','test'],['attendance.php','Attendance','check'],['reports.php','Reports','chart'],['profile.php','Profile','user']];
+        return $nav;
+    }
+    $nav = [['dashboard.php','Dashboard','home'],['course_assignments.php','My teaching assignments','users'],['subjects.php','My Subjects','book'],['modules.php','Modules','book'],['lessons.php','Lessons','book'],['media_library.php','Media library','download'],['question_bank.php','Question bank','test'],['students.php','Students','users'],['tests.php','Tests','test'],['attendance.php','Attendance','check'],['reports.php','Reports','chart'],['profile.php','Profile','user']];
     $permissions = ['subjects.php'=>'subjects.view','modules.php'=>'modules.view','students.php'=>'students.view','tests.php'=>'tests.manage','attendance.php'=>'attendance.view','reports.php'=>'reports.view'];
     return array_values(array_filter($nav, static fn($item) => !isset($permissions[$item[0]]) || \App\Core\Authorization::can($permissions[$item[0]])));
 }
@@ -70,11 +74,11 @@ function page_header(string $title, array $opts = []): void
     $compact=!$public&&(in_array(current_page(),['dashboard.php','attendance.php'],true)||\App\Core\Authorization::isStudent()||\App\Core\Authorization::isTeacher());
     $lang = \App\Services\TranslationService::currentCode();
     header('Cache-Control: private, no-store');
-    echo '<!doctype html><html lang="' . e($lang) . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17657A"><meta name="color-scheme" content="light"><title>' . e(tr($title)) . ' · TLMTI Skills LMS</title><link rel="icon" href="assets/icons/icon.svg"><link rel="stylesheet" href="assets/css/app.css?v=20261027-2"></head>';
+    echo '<!doctype html><html lang="' . e($lang) . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17657A"><meta name="color-scheme" content="light"><title>' . e(tr($title)) . ' · TLMTI Skills LMS</title><link rel="icon" href="assets/icons/icon.svg"><link rel="stylesheet" href="assets/css/app.css?v=20261027-2"><link rel="stylesheet" href="assets/css/catalogue.css?v=20261029-2"></head>';
     echo '<body class="' . ($public ? 'auth-page' : 'app-page') . '" data-user-id="' . e($u ? (string)$u['id'] : '') . '" data-role="' . e($u ? $u['role_slug'] : '') . '" data-csrf="' . e(csrf_token()) . '"><div id="net-banner" class="net-banner" hidden>' . e(tr('You are offline. Connect to sync your progress.')) . '</div>';
     if (!$public) {
         $nav = app_navigation();
-        echo '<aside class="sidebar" id="main-navigation"><button class="icon-btn sidebar-close" data-menu-close aria-label="'.e(tr('Close menu')).'">×</button><a class="brand" href="dashboard.php"><span class="brand-mark">' . icon('book') . '</span><span>TLMTI <small>Skills LMS</small></span></a><div class="workspace-label">' . e(tr(\App\Core\Authorization::isSuperAdmin() ? 'ADMIN WORKSPACE' : (\App\Core\Authorization::isStudent() ? 'MY LEARNING' : 'TEACHING WORKSPACE'))) . '</div><nav aria-label="' . e(tr('Main navigation')) . '">';
+        echo '<aside class="sidebar" id="main-navigation"><button class="icon-btn sidebar-close" data-menu-close aria-label="'.e(tr('Close menu')).'">×</button><a class="brand" href="dashboard.php"><span class="brand-mark">' . icon('book') . '</span><span>TLMTI <small>Skills LMS</small></span></a><div class="workspace-label">' . e(tr(\App\Core\Authorization::isAdmin() ? 'ADMIN WORKSPACE' : (\App\Core\Authorization::isStudent() ? 'MY LEARNING' : 'TEACHING WORKSPACE'))) . '</div><nav aria-label="' . e(tr('Main navigation')) . '">';
         foreach ($nav as [$href,$label,$ico]) {
             echo '<a class="nav-item' . (current_page() === $href ? ' active' : '') . '" href="' . e($href) . '"' . (current_page() === $href ? ' aria-current="page"' : '') . '>' . icon($ico) . '<span>' . e(tr($label)) . '</span></a>';
         }
@@ -98,6 +102,7 @@ function page_header(string $title, array $opts = []): void
 function page_footer(): void
 {
     if(\App\Core\Auth::user()&&!in_array(current_page(),['dashboard.php','attendance.php'],true)){echo '<p class="attendance-shortcut"><a class="btn" href="dashboard.php#daily-attendance-title">'.icon('check').e(tr('Today attendance')).'</a></p>';}
+    echo '<script src="assets/js/media-duration.js?v=20261029-1" defer></script><script src="assets/js/management-forms.js?v=20261028-1" defer></script><script src="assets/js/catalogue.js?v=20261028-1" defer></script>';
     echo '<footer class="page-footer"><span>TLMTI Skills LMS</span><span>' . e(tr('Learn. Practise. Grow.')) . '</span></footer></main>';
     if (\App\Core\Auth::user()) {
         echo '</div><nav class="bottom-nav" aria-label="' . e(tr('Mobile navigation')) . '">';

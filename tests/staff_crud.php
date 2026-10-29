@@ -3,7 +3,7 @@ declare(strict_types=1);
 if(PHP_SAPI!=='cli'){exit;}
 require __DIR__.'/../app/autoload.php';
 use App\Core\{Database as DB,Auth};use App\Services\ManagementService as M;
-$_SESSION=['uid'=>(int)DB::val("SELECT u.id FROM users u JOIN roles r ON r.id=u.role_id WHERE r.code='admin' AND u.status='active' LIMIT 1"),'last_activity'=>time()];
+$_SESSION=['uid'=>(int)DB::val("SELECT u.id FROM users u JOIN roles r ON r.id=u.role_id WHERE r.code='super_admin' AND u.status='active' AND u.deleted_at IS NULL LIMIT 1"),'last_activity'=>time()];
 $pdo=DB::pdo();$pdo->beginTransaction();$passed=0;
 function expect(bool $ok,string $name):void{global $passed;if(!$ok){throw new RuntimeException('FAIL '.$name);}$passed++;echo "PASS $name\n";}
 try{

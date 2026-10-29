@@ -1,0 +1,41 @@
+PASS anonymous course management denied
+PASS root login
+PASS course form contains optional image control
+PASS course create with actual uploaded image
+PASS cover optimized to bounded private WebP
+PASS course detail displays uploaded image
+PASS duplicate course code rejected
+PASS edit without image preserves cover
+PASS replacement preserves physical file referenced by another entity
+PASS explicit course image removal
+PASS course save requires CSRF
+PASS fake image cannot modify course
+PASS executable extension rejected despite valid pixels
+PASS subjects image upload integrated
+PASS modules image upload integrated
+PASS lessons image upload integrated
+PASS link existing global HTML
+PASS link existing global JS
+PASS Super Admin assigns centre course availability
+PASS adminA login
+PASS Centre Admin sees available course
+PASS Centre Admin cannot change global course
+PASS Centre Admin cannot upload global subject cover
+PASS forged centre URL denied
+PASS foreign batch direct URL denied
+PASS Centre Admin assigns course to batch
+PASS Centre Admin saves multiple batch subjects
+PASS forged out-of-course subject rejected atomically
+PASS unchecked subject removal requires explicit confirmation
+PASS confirmed removal deactivates assignment only
+PASS Teacher batch assignment preserves authoring flags
+PASS teacher login
+PASS Teacher can view explicit teaching assignment
+PASS Teacher cannot self-assign batch subject
+PASS Teacher without authoring grant cannot replace module cover
+PASS adminB login
+PASS foreign Admin cannot fetch protected cover
+PASS student login
+PASS unenrolled Student cannot fetch protected cover
+PASS Student cannot upload global course image through learning route
+40 catalogue HTTP checks passed; fixtures cleaned.

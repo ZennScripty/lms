@@ -1,0 +1,28 @@
+PASS opening status never marks attendance
+PASS Out before In rejected
+PASS explicit simple In records present and server time
+PASS repeat In has one daily record
+PASS repeat In preserves manual correction
+PASS In state offers checkout
+PASS Out completes attendance with server duration
+PASS repeat Out never overwrites first checkout
+PASS In cannot restart completed day
+PASS different user cannot check out student
+PASS staff simple mode records teacher
+PASS staff simple mode records admin
+PASS student policy independent from staff
+PASS selfie mode never marks on open
+PASS selfie cannot be bypassed with simple POST
+PASS selfie requires uploaded photo
+PASS expired capture challenge rejected
+PASS expired challenge renewed while valid multi-tab challenge reused
+PASS valid camera image canonicalized to JPEG
+PASS non image selfie rejected
+PASS student cannot view teacher selfie
+PASS student can view own evidence
+PASS unassigned teacher cannot view student selfie
+PASS admin may review staff evidence
+PASS correction cannot move evidence to a different day
+PASS manual leave remains a protected recorded state
+PASS manual row without In cannot fabricate duration
+27 passed; fixtures rolled back.

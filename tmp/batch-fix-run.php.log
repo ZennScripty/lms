@@ -1,0 +1,52 @@
+Pass rule (module_pass_percent=50, rule=gte)
+  ok   49% fails
+  ok   50% passes with gte
+  ok   50% fails with gt
+  ok   51% passes with gt
+  ok   1 of 2 marks = 50% passes
+  ok   16 of 33 marks (48.48%) fails
+  ok   0 total marks never passes
+Module unlock rules
+  ok   passed status unlocks next
+  ok   in-progress with test stays locked even if lessons done
+  ok   no test: lessons done passes module
+  ok   no test: lessons pending does not pass
+  ok   15 day due date
+  ok   test not due before date
+  ok   test due on date
+Server-side scoring
+  ok   earned 3 of 4
+  ok   option not belonging to question scores zero
+  ok   no answers = 0%
+  ok   49/100 -> fail
+  ok   50/100 -> pass
+Translation fallback chain
+  ok   chain follows fallbacks then default
+  ok   loop-safe
+  ok   default appended when missing
+CSRF
+  ok   token is 64 hex chars
+  ok   valid token accepted
+  ok   wrong token rejected
+  ok   empty / null rejected
+  ok   no session token rejects everything
+Validator
+  ok   int accepts digits
+  ok   int rejects SQL-ish input
+  ok   int rejects out of range
+  ok   date accepts valid
+  ok   date rejects 2026-02-30
+  ok   uuid valid
+  ok   uuid invalid
+  ok   inList strict
+  ok   email normalised
+  ok   password min length
+  ok   intList dedupes and drops junk
+Sync helpers
+  ok   future client time clamped to now
+  ok   very old client time clamped to 30 days
+  ok   garbage time -> now
+  ok   parseEvents rejects non-JSON
+  ok   parseEvents orders by client time
+
+43 passed, 0 failed

@@ -1,0 +1,4 @@
+PASS cover migration 1 preserves existing values
+PASS cover migration 2 preserves existing values
+PASS strict access remains off
+3 migration checks passed

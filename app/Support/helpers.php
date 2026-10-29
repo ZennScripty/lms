@@ -93,7 +93,7 @@ function flash_render(): string
 {
     $html = '';
     foreach ($_SESSION['flash'] ?? [] as $f) {
-        $html .= '<div class="flash flash-' . e($f['type']) . '" role="status">' . e(tr($f['message'])) . '</div>';
+        $html .= '<div class="flash flash-' . e($f['type']) . '" role="status"'.($f['type']==='success'?' data-success-message':'').'>' . e(tr($f['message'])) . '</div>';
     }
     unset($_SESSION['flash']);
     return $html;

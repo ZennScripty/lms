@@ -6,14 +6,16 @@ use App\Services\ManagementService as M;
 Auth::requireLogin();
 if (M::isStaff()) {
     $page=current_page();
+    if($page==='courses.php'){require APP_ROOT.'/app/Views/global_courses.php';exit;}
     if($page==='dashboard.php'){require APP_ROOT.'/app/Views/staff_dashboard.php';exit;}
     if($page==='lesson.php'){require APP_ROOT.'/app/Views/staff_lesson.php';exit;}
     $sections=['centres.php'=>'centres','batches.php'=>'batches','users.php'=>'users','students.php'=>'students','subjects.php'=>'subjects','enrolments.php'=>'enrolments','modules.php'=>'modules','tests.php'=>'tests','attendance.php'=>'attendance'];
     if(isset($sections[$page])){
-        $section=$sections[$page];$views=match($page){'modules.php'=>['modules','lessons','media'],'subjects.php'=>Authorization::isSuperAdmin()?['subjects','assignments']:['subjects'],'users.php'=>['users','enrolments'],'tests.php'=>['tests','questions'],default=>[$section]};
+        $section=$sections[$page];$views=match($page){'modules.php'=>['modules','lessons','media'],'subjects.php'=>Authorization::isSuperAdmin()?['subjects','assignments','centre_subjects']:(Authorization::isCentreAdmin()?['subjects','assignments']:['subjects']),'users.php'=>['users','enrolments'],'tests.php'=>['tests','questions'],default=>[$section]};
         $candidate=$_GET['view']??$section;
         if(!is_string($candidate)||!in_array($candidate,$views,true)){not_found();}
         $section=$candidate;
+        if(Authorization::isAdmin()&&in_array($section,['enrolments','students'],true)){require APP_ROOT.'/app/Views/student_batches.php';exit;}
         require APP_ROOT.'/app/Views/'.($section==='media'?'media.php':'management.php');exit;
     }
     if(in_array($page,['reports.php','student_detail.php','sync_status.php','app_settings.php','roles_permissions.php','language_settings.php'],true)){

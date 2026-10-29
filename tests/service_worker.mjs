@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 const origin='http://localhost/lms/public/';
-const handlers={},stores=new Map();let online=true,serverUser='11';let count=0;
+const handlers={},stores=new Map();let online=true,serverUser='11',serverRevision='r1',serverStatus=200;let count=0;
 const caches={async open(name){if(!stores.has(name))stores.set(name,new Map());const store=stores.get(name);return{async put(req,res){store.set(typeof req==='string'?req:req.url,res.clone());},async match(req,options={}){const url=typeof req==='string'?req:req.url;const found=store.get(url);if(found)return found.clone();if(options.ignoreSearch){for(const [key,res]of store){if(key.split('?')[0]===url.split('?')[0])return res.clone();}}},async addAll(urls){for(const url of urls)store.set(url,new Response('shell'));}};},async keys(){return[...stores.keys()];},async delete(name){return stores.delete(name);}};
 const self={registration:{scope:origin},location:{origin:'http://localhost'},clients:{claim:async()=>{}},skipWaiting:async()=>{},addEventListener(type,fn){handlers[type]=fn;}};
-const fetch=async(req)=>{if(!online)throw new Error('offline');const url=typeof req==='string'?req:req.url;if(url.includes('assets/'))return new Response('asset');return new Response('student '+serverUser,{headers:{'X-TLMTI-User':serverUser,'X-TLMTI-Role':'student'}});};
+const fetch=async(req)=>{if(!online)throw new Error('offline');const url=typeof req==='string'?req:req.url;if(url.includes('assets/'))return new Response('asset');return new Response('student '+serverUser,{status:serverStatus,headers:{'X-TLMTI-User':serverUser,'X-TLMTI-Role':'student','X-TLMTI-Access':serverRevision}});};
 vm.runInNewContext(fs.readFileSync(new URL('../public/sw.js',import.meta.url),'utf8'),{self,caches,fetch,URL,Response,Headers,Promise,JSON,Number,Math,String});
 async function event(type,data={}){const work=[];let response;handlers[type]({...data,waitUntil(p){work.push(p);},respondWith(p){response=p;}});const result=response?await response:undefined;await Promise.all(work);return result;}
 function check(ok,label){if(!ok)throw new Error(label);count++;console.log('PASS '+label);}
@@ -20,4 +20,9 @@ response=await event('fetch',{request:{url:origin+'media.php?id=3',method:'GET',
 await event('message',{data:{type:'SET_USER',userId:'22',role:'student'}});response=await event('fetch',{request:nav});check(response.status===503,'account switch cannot read another user cache');
 online=true;serverUser='22';await event('fetch',{request:nav});online=false;response=await event('fetch',{request:nav});check(await response.text()==='student 22','second account has its own cached content');
 await event('message',{data:{type:'SET_USER',userId:'',role:''}});response=await event('fetch',{request:nav});check(response.status===503,'logout clears private downloaded content');
+online=true;serverUser='22';await event('fetch',{request:nav});
+const oldRevisionCache=await caches.open('tlmti-content-user-22');await oldRevisionCache.put(origin+'lesson.php?id=55',new Response('old assignment'));
+serverRevision='r2';await event('fetch',{request:{...nav,url:origin+'courses.php'}});online=false;response=await event('fetch',{request:{...nav,url:origin+'lesson.php?id=55'}});check(response.status===503,'assignment revision change clears old downloaded curriculum');
+await event('message',{data:{type:'SET_USER',userId:'22',role:'student'}});response=await event('fetch',{request:{...nav,url:origin+'courses.php'}});check(await response.text()==='student 22','same account announcement preserves current assignment revision cache');
+online=true;serverStatus=403;await event('fetch',{request:{url:origin+'media.php?id=3',method:'GET',mode:'cors',headers:new Headers()}});online=false;response=await event('fetch',{request:{...nav,url:origin+'courses.php'}});check(response.status===503,'online media denial clears stale private downloads');
 console.log(`${count} service worker tests passed`);

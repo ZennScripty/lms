@@ -1,0 +1,69 @@
+PASS one global subject reused by multiple courses
+PASS Centre Admin cannot create global course
+PASS Centre Admin cannot edit global curriculum
+PASS Centre Admin cannot expand course availability
+PASS foreign batch assignment denied
+PASS duplicate batch subjects collapse into unique mappings
+PASS subject outside course denied
+PASS malformed bulk selection denied
+PASS course unavailable to centre denied
+PASS database rejects subject outside selected course
+PASS database rejects missing batch-course relationship
+PASS database rejects duplicate batch-course-subject tuple
+PASS database rejects Teacher tuple without batch subject
+PASS A1 sees HTML and JS, with cross-course duplicate deduplicated
+PASS A1 cannot access unassigned PHP
+PASS Student cannot inspect another Student assignments
+PASS Student cannot change assignments
+PASS B1 sees PHP and cannot access JS
+PASS Centre Admin cannot inspect foreign Student assignments
+PASS stale individual enrolment does not bypass new batch rules
+PASS Phase B leaves existing StudentService behavior unchanged
+PASS subject removal requires confirmation
+PASS confirmed removal revokes new-model subject access
+PASS assignment removal preserves legacy progression row
+PASS reactivation restores same global subject
+PASS foreign Teacher cannot be assigned to batch
+PASS batch does not implicitly grant Teacher subject
+PASS Teacher batch assignment cannot elevate authoring permissions
+PASS explicit Teacher batch-course-subject tuple readable
+PASS shared subject cannot widen Teacher batch access
+PASS Teacher cannot self-assign another course
+PASS Teacher mapping deactivation revokes access
+PASS mapping retry preserves previously delegated grants and attribution
+PASS Teacher loses effective access when centre course unavailable
+PASS remove-all requires confirmation
+PASS inactive/unavailable course fails closed
+PASS inactive/unavailable centre-course fails closed
+PASS inactive/unavailable batch-course fails closed
+PASS inactive/unavailable course-subject fails closed
+PASS inactive/unavailable batch fails closed
+PASS inactive/unavailable centre fails closed
+PASS inactive/unavailable subject fails closed
+PASS inactive/unavailable centre-subject fails closed
+PASS invalid subject rolls back entire desired-set update
+PASS failed replacement retains previous subjects
+PASS forged cross-centre canonical batch fails closed
+PASS strict access works without manufacturing individual enrolments
+PASS actual StudentService rejects stale unassigned enrolment in strict mode
+PASS strict catalogue SQL pagination includes only deduplicated batch subjects
+PASS actual lesson resolver accepts authorized batch subject
+PASS actual test start and grading work without individual enrolment
+PASS direct lesson resolution denied after last batch assignment removed
+PASS offline study sync rechecks revoked batch assignment
+PASS new test attempt denied after assignment removal
+PASS submitted historical attempt remains owned and readable after removal
+PASS submission rechecks assignment revocation
+PASS legacy Student without canonical batch gains no strict access
+PASS actual Teacher authorization enforces explicit batch isolation
+PASS actual Teacher module scope uses explicit batch subjects
+PASS actual Teacher Student scope uses canonical batch
+PASS Teacher dropdown supports batch members without legacy enrolment
+PASS strict Teacher dashboard renders assigned subjects only
+PASS strict Teacher reports render canonical batch subjects
+PASS strict student course screen renders batch-only access
+PASS strict staff reporting source includes eligible batch-only members
+PASS anonymous cannot inspect assignments
+PASS anonymous writes denied
+PASS new mapping mutations audited
+68 passed; all global-course fixtures rolled back.
