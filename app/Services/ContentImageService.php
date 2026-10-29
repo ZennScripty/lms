@@ -40,6 +40,12 @@ final class ContentImageService
         try{return DB::transaction(function()use($kind,$id,$input,$encoded,$remove,&$path){
             if($kind==='courses'){$saved=CourseAssignmentService::saveCourse($id,V::str($input['code']??'','Code',1,40),V::str($input['name']??'','Name',1,160),V::optStr($input['description']??'','Description',5000),isset($input['is_active']));}
             else{$saved=ManagementService::save($kind,$id,$input);}
+            if($kind==='subjects'){
+                // Old clients may preserve existing links, but cannot create an orphan subject.
+                $courseIds=$input['course_ids']??($id?array_column(DB::all('SELECT course_id FROM course_subjects WHERE subject_id=? AND is_active=1',[$id]),'course_id'):[]);
+                if(!is_array($courseIds))throw new \DomainException('Invalid courses.');
+                CourseAssignmentService::setSubjectCourses($saved,$courseIds,($input['confirm_course_removal']??'')==='1');
+            }
             if($encoded||$remove){
                 $asset=null;if($encoded){$uuid=uuid_v4();$relative='uploads/cover-'.$uuid.'.'.$encoded['ext'];$path=APP_ROOT.'/storage/'.$relative;
                     if(!is_dir(dirname($path))&&!mkdir(dirname($path),0700,true)&&!is_dir(dirname($path)))throw new \RuntimeException('Cover storage unavailable.');

@@ -145,4 +145,10 @@ return [
  'Teacher subject grants'=>'शिक्षक विषय अनुमतियाँ',
  'Ask your Admin to assign your batch.'=>'अपने एडमिन से बैच निर्धारित करने के लिए कहें।',
  'Attempts'=>'प्रयास',
+ 'Select at least one course. A subject can be shared by multiple courses.'=>'कम से कम एक पाठ्यक्रम चुनें। एक विषय कई पाठ्यक्रमों में साझा किया जा सकता है।',
+ 'Select at least one course for this subject.'=>'इस विषय के लिए कम से कम एक पाठ्यक्रम चुनें।',
+ 'Confirm course removal. Batch access may be affected; history will be retained.'=>'पाठ्यक्रम हटाने की पुष्टि करें। बैच एक्सेस प्रभावित हो सकता है; इतिहास सुरक्षित रहेगा।',
+ 'Invalid courses.'=>'अमान्य पाठ्यक्रम।',
+ 'Back to List'=>'सूची पर वापस जाएँ', 'All users'=>'सभी उपयोगकर्ता', 'Teachers / Staff'=>'शिक्षक / कर्मचारी', 'Centre Admins'=>'केंद्र एडमिन', 'Super Admins'=>'सुपर एडमिन',
+ 'View progress'=>'प्रगति देखें',
 ];

@@ -74,12 +74,20 @@ function page_header(string $title, array $opts = []): void
     $compact=!$public&&(in_array(current_page(),['dashboard.php','attendance.php'],true)||\App\Core\Authorization::isStudent()||\App\Core\Authorization::isTeacher());
     $lang = \App\Services\TranslationService::currentCode();
     header('Cache-Control: private, no-store');
-    echo '<!doctype html><html lang="' . e($lang) . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17657A"><meta name="color-scheme" content="light"><title>' . e(tr($title)) . ' · TLMTI Skills LMS</title><link rel="icon" href="assets/icons/icon.svg"><link rel="stylesheet" href="assets/css/app.css?v=20261027-2"><link rel="stylesheet" href="assets/css/catalogue.css?v=20261029-2"></head>';
+    echo '<!doctype html><html lang="' . e($lang) . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17657A"><meta name="color-scheme" content="light"><title>' . e(tr($title)) . ' · TLMTI Skills LMS</title><link rel="icon" href="assets/icons/icon.svg"><link rel="stylesheet" href="assets/css/app.css?v=20261027-2"><link rel="stylesheet" href="assets/css/catalogue.css?v=20261029-4"></head>';
     echo '<body class="' . ($public ? 'auth-page' : 'app-page') . '" data-user-id="' . e($u ? (string)$u['id'] : '') . '" data-role="' . e($u ? $u['role_slug'] : '') . '" data-csrf="' . e(csrf_token()) . '"><div id="net-banner" class="net-banner" hidden>' . e(tr('You are offline. Connect to sync your progress.')) . '</div>';
     if (!$public) {
         $nav = app_navigation();
         echo '<aside class="sidebar" id="main-navigation"><button class="icon-btn sidebar-close" data-menu-close aria-label="'.e(tr('Close menu')).'">×</button><a class="brand" href="dashboard.php"><span class="brand-mark">' . icon('book') . '</span><span>TLMTI <small>Skills LMS</small></span></a><div class="workspace-label">' . e(tr(\App\Core\Authorization::isAdmin() ? 'ADMIN WORKSPACE' : (\App\Core\Authorization::isStudent() ? 'MY LEARNING' : 'TEACHING WORKSPACE'))) . '</div><nav aria-label="' . e(tr('Main navigation')) . '">';
         foreach ($nav as [$href,$label,$ico]) {
+            if($href==='users.php'&&\App\Core\Authorization::isAdmin()){
+                $rolePages=['users.php'=>'All users','student_accounts.php'=>'Students','teacher_accounts.php'=>'Teachers / Staff'];
+                if(\App\Core\Authorization::isSuperAdmin())$rolePages+=['centre_admins.php'=>'Centre Admins','super_admins.php'=>'Super Admins'];
+                echo '<details class="nav-group"'.(array_key_exists(current_page(),$rolePages)?' open':'').'><summary>'.icon('users').'<span>'.e(tr('Users')).'</span></summary><div>';
+                foreach($rolePages as $url=>$text)echo '<a class="nav-item'.(current_page()===$url?' active':'').'" href="'.e($url).'">'.e(tr($text)).'</a>';
+                echo '</div></details>';continue;
+            }
+
             echo '<a class="nav-item' . (current_page() === $href ? ' active' : '') . '" href="' . e($href) . '"' . (current_page() === $href ? ' aria-current="page"' : '') . '>' . icon($ico) . '<span>' . e(tr($label)) . '</span></a>';
         }
         echo '</nav><div class="sidebar-footer"><div class="avatar">' . e(mb_substr($u['name'],0,1)) . '</div><div><strong>' . e($u['name']) . '</strong><small>' . e(tr($u['role_name'])) . '</small></div></div></aside><div class="app-main"><header class="app-topbar"><button class="icon-btn mobile-menu" data-menu-toggle aria-controls="main-navigation" aria-expanded="false" aria-label="' . e(tr('Open menu')) . '">' . icon('menu') . '</button><span class="breadcrumb">' . e(tr($title)) . '</span><div class="topbar-actions">';
@@ -102,7 +110,7 @@ function page_header(string $title, array $opts = []): void
 function page_footer(): void
 {
     if(\App\Core\Auth::user()&&!in_array(current_page(),['dashboard.php','attendance.php'],true)){echo '<p class="attendance-shortcut"><a class="btn" href="dashboard.php#daily-attendance-title">'.icon('check').e(tr('Today attendance')).'</a></p>';}
-    echo '<script src="assets/js/media-duration.js?v=20261029-1" defer></script><script src="assets/js/management-forms.js?v=20261028-1" defer></script><script src="assets/js/catalogue.js?v=20261028-1" defer></script>';
+    echo '<script src="assets/js/media-duration.js?v=20261029-1" defer></script><script src="assets/js/management-forms.js?v=20261029-4" defer></script><script src="assets/js/catalogue.js?v=20261028-1" defer></script>';
     echo '<footer class="page-footer"><span>TLMTI Skills LMS</span><span>' . e(tr('Learn. Practise. Grow.')) . '</span></footer></main>';
     if (\App\Core\Auth::user()) {
         echo '</div><nav class="bottom-nav" aria-label="' . e(tr('Mobile navigation')) . '">';

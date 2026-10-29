@@ -61,6 +61,21 @@ final class CourseAssignmentService
             self::mapping('course_subjects',['course_id'=>$course,'subject_id'=>$subject],$active);
         });
     }
+    /** Subject editor desired-set update; retain inactive links and all learning history. */
+    public static function setSubjectCourses(int $subject,array $courses,bool $confirmRemoval=false): void
+    {
+        self::guard(true);
+        if(!$courses||count($courses)>200)throw new \DomainException('Select at least one course for this subject.');
+        $ids=[];foreach($courses as $id){if($id==='')continue;$ids[]=V::int($id,'Course',1);}$ids=array_values(array_unique($ids));sort($ids);if(!$ids)throw new \DomainException('Select at least one course for this subject.');
+        DB::transaction(function()use($subject,$ids,$confirmRemoval){
+            if(!DB::one('SELECT id FROM subjects WHERE id=? FOR UPDATE',[$subject]))throw new \DomainException('Subject not found.');
+            $current=array_map('intval',array_column(DB::all('SELECT course_id FROM course_subjects WHERE subject_id=? AND is_active=1 FOR UPDATE',[$subject]),'course_id'));
+            foreach($ids as $id){$course=DB::one('SELECT is_active FROM courses WHERE id=? FOR UPDATE',[$id]);if(!$course||(!$course['is_active']&&!in_array($id,$current,true)))throw new \DomainException('Choose an available course.');}
+            $removed=array_diff($current,$ids);if($removed&&!$confirmRemoval)throw new \DomainException('Confirm course removal. Batch access may be affected; history will be retained.');
+            foreach($removed as $id)self::mapping('course_subjects',['course_id'=>$id,'subject_id'=>$subject],false);
+            foreach($ids as $id)self::mapping('course_subjects',['course_id'=>$id,'subject_id'=>$subject],true);
+        });
+    }
     public static function setCentreCourse(int $centre,int $course,bool $active=true): void
     {
         self::guard(true);DB::transaction(function()use($centre,$course,$active){
